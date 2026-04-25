@@ -18,6 +18,15 @@ Steps marked **🤖 automatable** are candidates for the Phase 15 deploy script.
 
 ---
 
+## URLs
+
+| Service | URL |
+|---|---|
+| Worker API | `https://courtadmin.seezed.net` |
+| Frontend (Pages) | `https://court-admin.pages.dev` (update once custom domain is set on Pages) |
+
+---
+
 ## Step 1 — Cloudflare Access Application
 
 **Dashboard path:** Cloudflare Zero Trust → Access → Applications → Add an application
@@ -25,16 +34,14 @@ Steps marked **🤖 automatable** are candidates for the Phase 15 deploy script.
 Manual — cannot be fully automated via Wrangler CLI.
 
 1. Click **Add an application** → choose **Self-hosted**
-2. **Application name:** CourtAdmin (or your preferred name)
-3. **Application domain:** the subdomain the Worker will be deployed to
-   - e.g. `court-admin.yourdomain.workers.dev` for a Workers subdomain
-   - or a custom domain like `api.yourdomain.com`
+2. **Application name:** CourtAdmin
+3. **Application domain:** `courtadmin.seezed.net`
 4. **Identity providers:** select **One-time PIN** (email magic link / OTP — no third-party IdP needed)
 5. **Policy:** create a policy:
    - Policy name: e.g. `Allow all`
    - Action: `Allow`
    - Rule: `Everyone` (any email can authenticate; roles are controlled in the app)
-   - Alternatively, restrict to a specific email domain with rule `Emails ending in @yourdomain.com`
+   - Alternatively, restrict to a specific email domain with rule `Emails ending in @seezed.net`
 6. Save the application
 7. On the application overview page, copy the **AUD tag** (Application Audience string)
 
@@ -158,6 +165,27 @@ npx wrangler deploy
 
 ---
 
+## Step 9 — Set `VITE_API_URL` on the Pages project
+
+The frontend and Worker are on different origins, so the frontend must know where to send API requests.
+
+**Dashboard path:** Workers & Pages → court-admin (Pages project) → Settings → Environment variables
+
+Add the following variable (for both Production and Preview environments):
+
+| Variable | Value |
+|---|---|
+| `VITE_API_URL` | `https://courtadmin.seezed.net` |
+
+Then redeploy the Pages project so the variable is baked into the build:
+
+```bash
+cd frontend && npm run build && cd ..
+npx wrangler pages deploy frontend/dist --project-name court-admin
+```
+
+---
+
 ## Local Development
 
 ```bash
@@ -197,11 +225,12 @@ Wrangler tracks which migrations have already been applied and only runs new one
 
 ## Checklist — Fresh Instance
 
-- [ ] Step 1: CF Access application created, AUD tag copied
+- [ ] Step 1: CF Access application created for `courtadmin.seezed.net`, AUD tag copied
 - [ ] Step 2: Worker secrets set (`CF_ACCESS_AUD`, `RESEND_API_KEY`)
 - [ ] Step 3: D1 database created, ID in `wrangler.toml`, migrations applied
 - [ ] Step 4: R2 bucket created
 - [ ] Step 5: Worker deployed
 - [ ] Step 6: Frontend built and deployed to Pages
 - [ ] Step 7: Admin user seeded
-- [ ] Step 8: `FRONTEND_URL` updated and Worker redeployed
+- [ ] Step 8: `FRONTEND_URL` updated in `wrangler.toml` and Worker redeployed
+- [ ] Step 9: `VITE_API_URL=https://courtadmin.seezed.net` set in Pages env vars, Pages redeployed

@@ -3,6 +3,9 @@ main = "worker/src/index.ts"
 compatibility_date = "2025-04-25"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domain — set in Cloudflare dashboard → Workers → court-admin → Custom Domains
+# Live at: https://courtadmin.seezed.net
+
 [[d1_databases]]
 binding = "DB"
 database_name = "court-admin-db"
