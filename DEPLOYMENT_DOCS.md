@@ -22,8 +22,7 @@ Steps marked **🤖 automatable** are candidates for the Phase 15 deploy script.
 
 | Service | URL |
 |---|---|
-| Worker API | `https://courtadmin.seezed.net` |
-| Frontend (Pages) | `https://court-admin.pages.dev` (update once custom domain is set on Pages) |
+| App (Worker + static frontend) | `https://courtadmin.seezed.net` |
 
 ---
 
@@ -107,33 +106,25 @@ The bucket name `court-admin-assets` is already referenced in `wrangler.toml` �
 
 ---
 
-## Step 5 — Deploy the Worker
+## Step 5 — Build and Deploy
 
 **🤖 automatable**
 
+The frontend is bundled and served directly from the Worker via Workers Assets — no separate Pages project needed. A single command does both:
+
 ```bash
-npx wrangler deploy
+npm run deploy
+# equivalent to: cd frontend && npm run build && cd .. && wrangler deploy
 ```
+
+The Worker serves:
+- `/api/*` → Worker code (Hono)
+- Everything else → `frontend/dist` static files (React SPA)
+- Unknown paths → `index.html` (SPA fallback, handles client-side routing)
 
 ---
 
-## Step 6 — Build and Deploy the Frontend (Pages)
-
-**🤖 automatable**
-
-```bash
-# Build the frontend
-cd frontend && npm run build && cd ..
-
-# Deploy to Cloudflare Pages
-npx wrangler pages deploy frontend/dist --project-name court-admin
-```
-
-> **First deploy only:** if the Pages project doesn't exist yet, Wrangler will prompt you to create it. On subsequent deploys it will publish to the existing project.
-
----
-
-## Step 7 — Seed the Admin User
+## Step 6 — Seed the Admin User
 
 **🤖 automatable**
 
@@ -148,64 +139,31 @@ npx wrangler d1 execute court-admin-db --remote --command \
 
 ---
 
-## Step 8 — Configure `FRONTEND_URL` var
-
-In `wrangler.toml`, update the `FRONTEND_URL` var to the actual Pages URL once it is known:
-
-```toml
-[vars]
-FRONTEND_URL = "https://court-admin.pages.dev"
-```
-
-Redeploy the Worker after updating:
-
-```bash
-npx wrangler deploy
-```
-
----
-
-## Step 9 — Set `VITE_API_URL` on the Pages project
-
-The frontend and Worker are on different origins, so the frontend must know where to send API requests.
-
-**Dashboard path:** Workers & Pages → court-admin (Pages project) → Settings → Environment variables
-
-Add the following variable (for both Production and Preview environments):
-
-| Variable | Value |
-|---|---|
-| `VITE_API_URL` | `https://courtadmin.seezed.net` |
-
-Then redeploy the Pages project so the variable is baked into the build:
-
-```bash
-cd frontend && npm run build && cd ..
-npx wrangler pages deploy frontend/dist --project-name court-admin
-```
-
----
-
 ## Local Development
 
+Run both servers in separate terminals:
+
 ```bash
-# Run the Worker locally (uses local D1 + R2 state in .wrangler/)
+# Terminal 1 — Wrangler Worker (API on http://localhost:8787)
 npm run dev
 
-# Run the frontend dev server
+# Terminal 2 — Vite frontend (http://localhost:5173, proxies /api/* to :8787)
 npm run frontend:dev
 ```
 
-For local dev, the Worker's CF Access auth middleware accepts an `X-Dev-Email` header
-instead of the real `CF-Access-Authenticated-User-Email` header — but **only** when the
-`CF_ACCESS_AUD` secret is set to the literal string `dev`.
+The Vite dev server proxies `/api/*` to `http://localhost:8787`, so relative API calls work without any extra config.
 
-To test locally with a specific user, pass the header in your requests:
+For auth in local dev, the CF Access middleware accepts an `X-Dev-Email` header in place of the real `CF-Access-Authenticated-User-Email` header — **only** when `CF_ACCESS_AUD` secret is set to the literal string `dev`:
+
+```bash
+npx wrangler secret put CF_ACCESS_AUD
+# enter: dev
+```
+
+Then pass the header in requests (browser extension, Vite plugin, or curl):
 ```
 X-Dev-Email: you@example.com
 ```
-
-Or set it in the Vite dev proxy / a browser extension.
 
 ---
 
@@ -229,8 +187,5 @@ Wrangler tracks which migrations have already been applied and only runs new one
 - [ ] Step 2: Worker secrets set (`CF_ACCESS_AUD`, `RESEND_API_KEY`)
 - [ ] Step 3: D1 database created, ID in `wrangler.toml`, migrations applied
 - [ ] Step 4: R2 bucket created
-- [ ] Step 5: Worker deployed
-- [ ] Step 6: Frontend built and deployed to Pages
-- [ ] Step 7: Admin user seeded
-- [ ] Step 8: `FRONTEND_URL` updated in `wrangler.toml` and Worker redeployed
-- [ ] Step 9: `VITE_API_URL=https://courtadmin.seezed.net` set in Pages env vars, Pages redeployed
+- [ ] Step 5: `npm run deploy` — builds frontend and deploys Worker + static assets
+- [ ] Step 6: Admin user seeded

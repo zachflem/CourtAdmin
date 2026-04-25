@@ -1,6 +1,7 @@
 export interface Env {
   DB: D1Database;
-  ASSETS: R2Bucket;
+  ASSETS: Fetcher;    // Workers Assets — serves frontend/dist static files
+  UPLOADS: R2Bucket;  // R2 — user-uploaded media (logo, hero, about images)
   RESEND_API_KEY: string;
   CF_ACCESS_AUD: string;
   FRONTEND_URL: string;

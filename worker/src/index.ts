@@ -23,4 +23,7 @@ app.route('/api/auth', authRoutes);
 app.route('/api/club-settings', clubSettingsRoutes);
 app.route('/api/homepage-stats', homepageStatsRoutes);
 
+// Fall through to Workers Assets (serves frontend/dist) for all non-API routes
+app.notFound((c) => c.env.ASSETS.fetch(c.req.raw));
+
 export default app;

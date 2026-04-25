@@ -3,20 +3,27 @@ main = "worker/src/index.ts"
 compatibility_date = "2025-04-25"
 compatibility_flags = ["nodejs_compat"]
 
-# Custom domain — set in Cloudflare dashboard → Workers → court-admin → Custom Domains
-# Live at: https://courtadmin.seezed.net
+# Custom domain: https://courtadmin.seezed.net
+# Set in Cloudflare dashboard → Workers → court-admin → Custom Domains
+
+# Static frontend files served directly from the Worker
+[assets]
+directory = "./frontend/dist"
+not_found_handling = "single-page-application"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "court-admin-db"
 database_id = "33198368-5fdc-497d-bd78-2c480c08b566"
 
+# R2 bucket for user-uploaded media (logo, hero image, about image)
+# Bound as UPLOADS to avoid collision with the reserved ASSETS binding
 [[r2_buckets]]
-binding = "ASSETS"
+binding = "UPLOADS"
 bucket_name = "court-admin-assets"
 
 [vars]
-FRONTEND_URL = "https://court-admin.pages.dev"
+FRONTEND_URL = "https://courtadmin.seezed.net"
 
 # Secrets (set via `wrangler secret put`):
 #   RESEND_API_KEY
