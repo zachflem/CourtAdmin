@@ -1,0 +1,20 @@
+name = "court-admin"
+main = "worker/src/index.ts"
+compatibility_date = "2025-04-25"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "court-admin-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "ASSETS"
+bucket_name = "court-admin-assets"
+
+[vars]
+FRONTEND_URL = "https://court-admin.pages.dev"
+
+# Secrets (set via `wrangler secret put`):
+#   RESEND_API_KEY
+#   CF_ACCESS_AUD
