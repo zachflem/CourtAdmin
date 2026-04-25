@@ -409,12 +409,12 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 3 — Image Uploads (R2)
-- [ ] `POST /api/upload-logo`, `DELETE /api/delete-logo`
-- [ ] `POST /api/upload-hero-image`, `DELETE /api/delete-hero-image`
-- [ ] `POST /api/upload-about-image`, `DELETE /api/delete-about-image`
-- [ ] R2 put/delete via `env.UPLOADS.put()` / `.delete()`; store public URL in `club_settings`
-- [ ] Worker route to serve R2 objects: `GET /uploads/:category/:filename`
-- [ ] Frontend upload / preview / delete components (wired in Club Customization panel in Phase 14)
+- [x] `POST /api/upload-logo`, `DELETE /api/delete-logo`
+- [x] `POST /api/upload-hero-image`, `DELETE /api/delete-hero-image`
+- [x] `POST /api/upload-about-image`, `DELETE /api/delete-about-image`
+- [x] R2 put/delete via `env.UPLOADS.put()` / `.delete()`; store public URL in `club_settings`
+- [x] Worker route to serve R2 objects: `GET /uploads/:category/:filename`
+- [x] Frontend upload / preview / delete components (wired in Club Customization panel in Phase 14)
 
 ---
 

@@ -151,7 +151,7 @@ npm run dev
 npm run frontend:dev
 ```
 
-The Vite dev server proxies `/api/*` to `http://localhost:8787`, so relative API calls work without any extra config.
+The Vite dev server proxies `/api/*` and `/uploads/*` to `http://localhost:8787`, so relative API calls and R2-served image URLs work without any extra config.
 
 For auth in local dev, the CF Access middleware accepts an `X-Dev-Email` header in place of the real `CF-Access-Authenticated-User-Email` header — **only** when `CF_ACCESS_AUD` secret is set to the literal string `dev`:
 
