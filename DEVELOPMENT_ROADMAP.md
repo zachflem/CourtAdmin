@@ -386,7 +386,7 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 1 — Auth & Identity
-- [ ] Configure Cloudflare Access application — Email OTP / Magic Link provider
+- [x] Configure Cloudflare Access application — Email OTP / Magic Link provider
 - [x] Worker middleware: extract `CF-Access-Authenticated-User-Email`, look up `users` table, auto-provision on first access with `roles = []`
 - [x] Role guard helper: `requireRole(ctx, ['admin'])` — returns 403 if not satisfied
 - [x] `GET /api/auth/me` — returns current user record
