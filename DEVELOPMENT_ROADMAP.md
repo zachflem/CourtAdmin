@@ -377,7 +377,7 @@ Key differences from the original MongoDB design:
 ### Phase 0 — Scaffold & Infrastructure
 - [x] Create new repo
 - [x] `wrangler init` — Workers project with TypeScript
-- [x] `wrangler.toml` — D1 binding (`DB`), R2 binding (`ASSETS`), Pages project link
+- [x] `wrangler.toml` — D1 binding (`DB`), R2 binding (`UPLOADS`), Workers Assets (`frontend/dist`)
 - [x] Write all D1 migration SQL files (`users`, `club_settings`, `seasons`, `teams`, `team_players`, `team_coaches`, `team_managers`, `eois`, `player_feedback`, `email_templates`, `email_campaigns`, `role_requests`)
 - [x] Create R2 bucket (`court-admin-assets`)
 - [x] Vite + React scaffold → `frontend/`
@@ -396,15 +396,15 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 2 — Club Settings + Homepage Shell
-- [ ] `GET /api/club-settings` (public)
-- [ ] `PUT /api/club-settings` (admin)
-- [ ] Frontend `ClubProvider` context
-- [ ] Navigation bar (logo, public links, Login button)
-- [ ] Hero section (club name, mission, hero image, CTA)
-- [ ] Features section (static cards)
-- [ ] About / Club Info section (about text, contact, about image)
-- [ ] Dynamic CSS variables from `primary_color` / `secondary_color` / `accent_color`
-- [ ] `GET /api/homepage-stats` (public)
+- [x] `GET /api/club-settings` (public)
+- [x] `PUT /api/club-settings` (admin)
+- [x] Frontend `ClubProvider` context
+- [x] Navigation bar (logo, public links, Login button)
+- [x] Hero section (club name, mission, hero image, CTA)
+- [x] Features section (static cards)
+- [x] About / Club Info section (about text, contact, about image)
+- [x] Dynamic CSS variables from `primary_color` / `secondary_color` / `accent_color`
+- [x] `GET /api/homepage-stats` (public)
 
 ---
 
@@ -412,7 +412,7 @@ Key differences from the original MongoDB design:
 - [ ] `POST /api/upload-logo`, `DELETE /api/delete-logo`
 - [ ] `POST /api/upload-hero-image`, `DELETE /api/delete-hero-image`
 - [ ] `POST /api/upload-about-image`, `DELETE /api/delete-about-image`
-- [ ] R2 put/delete via `env.ASSETS.put()` / `.delete()`; store public URL in `club_settings`
+- [ ] R2 put/delete via `env.UPLOADS.put()` / `.delete()`; store public URL in `club_settings`
 - [ ] Worker route to serve R2 objects: `GET /uploads/:category/:filename`
 - [ ] Frontend upload / preview / delete components (wired in Club Customization panel in Phase 14)
 
@@ -521,8 +521,6 @@ Key differences from the original MongoDB design:
 - [ ] Wrangler secrets setup
 - [ ] D1 database create + migrations
 - [ ] R2 bucket create
-- [ ] Frontend build
-- [ ] Worker deploy
-- [ ] Pages deploy
+- [ ] Frontend build + Worker deploy (`npm run deploy`)
 - [ ] Admin user seed
 - [ ] Post-deploy output: app URL, next steps
