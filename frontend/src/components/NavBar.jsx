@@ -27,6 +27,7 @@ export function NavBar() {
             <>
               <Link to="/seasons" className="navbar-link">Seasons</Link>
               <Link to="/teams" className="navbar-link">Teams</Link>
+              <Link to="/players" className="navbar-link">Players</Link>
             </>
           )}
         </div>

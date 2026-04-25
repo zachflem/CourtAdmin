@@ -71,6 +71,7 @@ Current D1 database ID: `33198368-5fdc-497d-bd78-2c480c08b566`
 - Phase 4 — Season Management
 - Phase 5 — Public EOI Form
 - Phase 6 — Team Management
+- Phase 7 — EOI Processing Workflow
 
 ### Next phase
-- Phase 7 — EOI Processing Workflow
+- Phase 8 — User Management (Admin)

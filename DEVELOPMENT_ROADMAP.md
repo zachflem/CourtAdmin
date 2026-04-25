@@ -449,14 +449,14 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 7 — EOI Processing Workflow
-- [ ] `GET /api/eoi` (committee / admin)
-- [ ] `GET /api/eoi/:id/calculated-age-group`
-- [ ] `GET /api/players/available-jersey-numbers/:age_group`
-- [ ] `PUT /api/eoi/:id` — approve flow: create user, create parent if minor, assign to teams, set `first_year_registered`
-- [ ] `PUT /api/eoi/:id` — reject flow: set status + notes
-- [ ] Resend: welcome email (CF Access invitation) to approved player
-- [ ] Resend: welcome email to auto-created parent account
-- [ ] Frontend: EOI Inbox tab, EOI Processing dialog (age group, jersey picker, team selector), Processed EOIs tab
+- [x] `GET /api/eoi` (committee / admin)
+- [x] `GET /api/eoi/:id/calculated-age-group`
+- [x] `GET /api/players/available-jersey-numbers/:age_group`
+- [x] `PUT /api/eoi/:id` — approve flow: create user, create parent if minor, assign to teams, set `first_year_registered`
+- [x] `PUT /api/eoi/:id` — reject flow: set status + notes
+- [x] Resend: welcome email (CF Access invitation) to approved player
+- [x] Resend: welcome email to auto-created parent account
+- [x] Frontend: EOI Inbox tab, EOI Processing dialog (age group, jersey picker, team selector), Processed EOIs tab
 
 ---
 

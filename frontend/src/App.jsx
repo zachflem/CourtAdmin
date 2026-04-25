@@ -6,6 +6,7 @@ import { NavBar } from './components/NavBar';
 import { HomePage } from './pages/HomePage';
 import { SeasonsPage } from './pages/SeasonsPage';
 import { TeamsPage } from './pages/TeamsPage';
+import { PlayersPage } from './pages/PlayersPage';
 
 function LoginPage() {
   return (
@@ -66,6 +67,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <TeamsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/players"
+          element={
+            <ProtectedRoute>
+              <PlayersPage />
             </ProtectedRoute>
           }
         />
