@@ -68,6 +68,7 @@ Current D1 database ID: `33198368-5fdc-497d-bd78-2c480c08b566`
 - Phase 1 — Auth & Identity
 - Phase 2 — Club Settings + Homepage Shell
 - Phase 3 — Image Uploads (R2)
+- Phase 4 — Season Management
 
 ### Next phase
-- Phase 4 — Season Management
+- Phase 5 — Public EOI Form

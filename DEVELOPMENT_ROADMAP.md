@@ -419,11 +419,11 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 4 — Season Management
-- [ ] `GET /api/seasons` (committee / admin)
-- [ ] `POST /api/seasons`
-- [ ] `PUT /api/seasons/:id` (edit, open/close toggle, active/inactive toggle)
-- [ ] `GET /api/seasons/available` (public — open + active only)
-- [ ] Frontend: Season list, Create Season dialog, Edit/toggle buttons
+- [x] `GET /api/seasons` (committee / admin)
+- [x] `POST /api/seasons`
+- [x] `PUT /api/seasons/:id` (edit, open/close toggle, active/inactive toggle)
+- [x] `GET /api/seasons/available` (public — open + active only)
+- [x] Frontend: Season list, Create Season dialog, Edit/toggle buttons
 
 ---
 

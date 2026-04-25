@@ -4,6 +4,7 @@ import { ClubProvider } from './contexts/ClubContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NavBar } from './components/NavBar';
 import { HomePage } from './pages/HomePage';
+import { SeasonsPage } from './pages/SeasonsPage';
 
 function LoginPage() {
   return (
@@ -48,6 +49,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/seasons"
+          element={
+            <ProtectedRoute>
+              <SeasonsPage />
             </ProtectedRoute>
           }
         />
