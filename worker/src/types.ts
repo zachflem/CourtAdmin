@@ -3,6 +3,7 @@ export interface Env {
   ASSETS: Fetcher;    // Workers Assets — serves frontend/dist static files
   UPLOADS: R2Bucket;  // R2 — user-uploaded media (logo, hero, about images)
   RESEND_API_KEY: string;
+  RESEND_FROM_EMAIL: string;
   CF_ACCESS_AUD: string;
   FRONTEND_URL: string;
 }

@@ -24,6 +24,9 @@ bucket_name = "court-admin-assets"
 
 [vars]
 FRONTEND_URL = "https://courtadmin.seezed.net"
+# Resend "from" address — must be a verified sender in your Resend account.
+# The default works on Resend's free tier for testing; change for production.
+RESEND_FROM_EMAIL = "onboarding@resend.dev"
 
 # Secrets (set via `wrangler secret put`):
 #   RESEND_API_KEY

@@ -428,11 +428,11 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 5 — Public EOI Form
-- [ ] `POST /api/eoi` (public, no auth)
-- [ ] Frontend age calculation: show/hide parent fields based on DOB input
-- [ ] Season dropdown populated from `GET /api/seasons/available`
-- [ ] Resend: confirmation email to submitter on successful submission
-- [ ] Frontend: `EOIFormDialog` — full form with minor detection, clearance fields, parent section
+- [x] `POST /api/eoi` (public, no auth)
+- [x] Frontend age calculation: show/hide parent fields based on DOB input
+- [x] Season dropdown populated from `GET /api/seasons/available`
+- [x] Resend: confirmation email to submitter on successful submission
+- [x] Frontend: `EOIFormDialog` — full form with minor detection, clearance fields, parent section
 
 ---
 

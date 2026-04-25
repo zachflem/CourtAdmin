@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useClub } from '../contexts/ClubContext';
+import { EOIFormDialog } from '../components/EOIFormDialog';
 import './HomePage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -53,6 +54,7 @@ function FeatureCard({ icon, title, description }) {
 export function HomePage() {
   const { settings } = useClub();
   const [stats, setStats] = useState(null);
+  const [showEOI, setShowEOI] = useState(false);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/homepage-stats`)
@@ -76,9 +78,12 @@ export function HomePage() {
         <div className="hero-content">
           <h1 className="hero-title">{settings.club_name}</h1>
           <p className="hero-mission">{settings.mission_statement}</p>
-          <a href="#eoi" className="btn btn-accent btn-lg">
+          <button
+            className="btn btn-accent btn-lg"
+            onClick={() => setShowEOI(true)}
+          >
             Register Your Interest
-          </a>
+          </button>
         </div>
       </section>
 
@@ -155,6 +160,8 @@ export function HomePage() {
       <footer className="footer">
         <p>© {new Date().getFullYear()} {settings.club_name}. All rights reserved.</p>
       </footer>
+
+      {showEOI && <EOIFormDialog onClose={() => setShowEOI(false)} />}
     </div>
   );
 }

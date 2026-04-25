@@ -46,7 +46,7 @@ Manual — cannot be fully automated via Wrangler CLI.
 
 ---
 
-## Step 2 — Worker Secrets
+## Step 2 — Worker Secrets & Vars
 
 **🤖 automatable** (via `wrangler secret put` in deploy script)
 
@@ -59,6 +59,8 @@ npx wrangler secret put RESEND_API_KEY
 ```
 
 Both commands prompt for the value interactively.
+
+`RESEND_FROM_EMAIL` is set as a plain var in `wrangler.toml` (not a secret). The default is `onboarding@resend.dev` (works on Resend's free tier). For production, change it to a verified sender address on your Resend account, e.g. `noreply@yourdomain.com`.
 
 ---
 

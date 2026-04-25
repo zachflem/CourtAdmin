@@ -7,6 +7,7 @@ import clubSettingsRoutes from './routes/clubSettings';
 import homepageStatsRoutes from './routes/homepageStats';
 import uploadsRoutes from './routes/uploads';
 import seasonsRoutes from './routes/seasons';
+import eoiRoutes from './routes/eoi';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -26,6 +27,7 @@ app.route('/api/club-settings', clubSettingsRoutes);
 app.route('/api/homepage-stats', homepageStatsRoutes);
 app.route('/api', uploadsRoutes);
 app.route('/api/seasons', seasonsRoutes);
+app.route('/api/eoi', eoiRoutes);
 
 // Serve R2 uploads — must come before the Assets fallback
 app.get('/uploads/:category/:filename', async (c) => {
