@@ -437,11 +437,14 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 6 — Team Management
-- [ ] `GET /api/teams?season_id=`
-- [ ] `POST /api/teams`
-- [ ] `PUT /api/teams/:id` (add/remove players, coaches, managers via junction tables)
-- [ ] `GET /api/teams/by-age-group/:age_group`
-- [ ] Frontend: Team cards, Create Team dialog, Team Management dialog (3-tab roster)
+- [x] `GET /api/teams?season_id=`
+- [x] `POST /api/teams`
+- [x] `PUT /api/teams/:id` (add/remove players, coaches, managers via junction tables)
+- [x] `GET /api/teams/by-age-group/:age_group`
+- [x] `GET /api/teams/:id` (team with full member arrays — players, coaches, managers)
+- [x] `GET /api/users` (minimal list for admin/committee — team member search; full UI in Phase 8)
+- [x] Frontend: Team cards, Create Team dialog, Team Management dialog (3-tab roster)
+- [x] NavBar: Seasons + Teams links shown for admin/committee roles
 
 ---
 

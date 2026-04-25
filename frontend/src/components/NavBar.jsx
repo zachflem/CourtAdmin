@@ -7,6 +7,9 @@ export function NavBar() {
   const { user, loading } = useAuth();
   const { settings } = useClub();
 
+  const roles = user ? JSON.parse(user.roles || '[]') : [];
+  const isStaff = roles.includes('admin') || roles.includes('committee');
+
   return (
     <nav className="navbar">
       <div className="navbar-inner">
@@ -20,6 +23,12 @@ export function NavBar() {
         <div className="navbar-links">
           <a href="#about" className="navbar-link">About</a>
           <a href="#contact" className="navbar-link">Contact</a>
+          {isStaff && (
+            <>
+              <Link to="/seasons" className="navbar-link">Seasons</Link>
+              <Link to="/teams" className="navbar-link">Teams</Link>
+            </>
+          )}
         </div>
 
         <div className="navbar-actions">

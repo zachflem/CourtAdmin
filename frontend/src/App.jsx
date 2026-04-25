@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { NavBar } from './components/NavBar';
 import { HomePage } from './pages/HomePage';
 import { SeasonsPage } from './pages/SeasonsPage';
+import { TeamsPage } from './pages/TeamsPage';
 
 function LoginPage() {
   return (
@@ -57,6 +58,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <SeasonsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teams"
+          element={
+            <ProtectedRoute>
+              <TeamsPage />
             </ProtectedRoute>
           }
         />

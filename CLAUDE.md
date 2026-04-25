@@ -70,6 +70,7 @@ Current D1 database ID: `33198368-5fdc-497d-bd78-2c480c08b566`
 - Phase 3 — Image Uploads (R2)
 - Phase 4 — Season Management
 - Phase 5 — Public EOI Form
+- Phase 6 — Team Management
 
 ### Next phase
-- Phase 6 — Team Management
+- Phase 7 — EOI Processing Workflow
