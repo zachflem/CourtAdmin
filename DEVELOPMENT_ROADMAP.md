@@ -375,23 +375,23 @@ Key differences from the original MongoDB design:
 ## Build Phases
 
 ### Phase 0 — Scaffold & Infrastructure
-- [ ] Create new repo
-- [ ] `wrangler init` — Workers project with TypeScript
-- [ ] `wrangler.toml` — D1 binding (`DB`), R2 binding (`ASSETS`), Pages project link
-- [ ] Write all D1 migration SQL files (`users`, `club_settings`, `seasons`, `teams`, `team_players`, `team_coaches`, `team_managers`, `eois`, `player_feedback`, `email_templates`, `email_campaigns`, `role_requests`)
-- [ ] Create R2 bucket (`court-admin-assets`)
-- [ ] Vite + React scaffold → `frontend/`
-- [ ] Stub `deploy.sh` that can be run end-to-end (full implementation in Phase 15)
+- [x] Create new repo
+- [x] `wrangler init` — Workers project with TypeScript
+- [x] `wrangler.toml` — D1 binding (`DB`), R2 binding (`ASSETS`), Pages project link
+- [x] Write all D1 migration SQL files (`users`, `club_settings`, `seasons`, `teams`, `team_players`, `team_coaches`, `team_managers`, `eois`, `player_feedback`, `email_templates`, `email_campaigns`, `role_requests`)
+- [x] Create R2 bucket (`court-admin-assets`)
+- [x] Vite + React scaffold → `frontend/`
+- [x] Stub `deploy.sh` that can be run end-to-end (full implementation in Phase 15)
 
 ---
 
 ### Phase 1 — Auth & Identity
 - [ ] Configure Cloudflare Access application — Email OTP / Magic Link provider
-- [ ] Worker middleware: extract `CF-Access-Authenticated-User-Email`, look up `users` table, auto-provision on first access with `roles = []`
-- [ ] Role guard helper: `requireRole(ctx, ['admin'])` — returns 403 if not satisfied
-- [ ] `GET /api/auth/me` — returns current user record
-- [ ] Frontend `AuthProvider` context: calls `/api/auth/me` on load, stores user, redirects unauthenticated users to CF Access login
-- [ ] `ProtectedRoute` component
+- [x] Worker middleware: extract `CF-Access-Authenticated-User-Email`, look up `users` table, auto-provision on first access with `roles = []`
+- [x] Role guard helper: `requireRole(ctx, ['admin'])` — returns 403 if not satisfied
+- [x] `GET /api/auth/me` — returns current user record
+- [x] Frontend `AuthProvider` context: calls `/api/auth/me` on load, stores user, redirects unauthenticated users to CF Access login
+- [x] `ProtectedRoute` component
 
 ---
 
