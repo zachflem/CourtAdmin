@@ -72,6 +72,7 @@ Current D1 database ID: `33198368-5fdc-497d-bd78-2c480c08b566`
 - Phase 5 — Public EOI Form
 - Phase 6 — Team Management
 - Phase 7 — EOI Processing Workflow
+- Phase 8 — User Management (Admin)
 
 ### Next phase
-- Phase 8 — User Management (Admin)
+- Phase 9 — Role Request Workflow

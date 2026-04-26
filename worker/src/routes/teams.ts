@@ -83,9 +83,9 @@ app.get('/:id', async (c) => {
 
   return c.json({
     ...team,
-    players: players.results,
-    coaches: coaches.results,
-    managers: managers.results,
+    players: players?.results ?? [],
+    coaches: coaches?.results ?? [],
+    managers: managers?.results ?? [],
   });
 });
 

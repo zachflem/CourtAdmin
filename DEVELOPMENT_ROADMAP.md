@@ -461,12 +461,14 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 8 — User Management (Admin)
-- [ ] `GET /api/users`
-- [ ] `PUT /api/users/:id`
-- [ ] `PUT /api/users/:id/roles`
-- [ ] `GET /api/users/export` (CSV)
-- [ ] `POST /api/users/import` (CSV upsert)
-- [ ] Frontend: User Management tab, User Details dialog, Export/Import buttons
+- [x] `GET /api/users` — full user fields returned (admin/committee)
+- [x] `PUT /api/users/:id` — update all editable user fields (admin only)
+- [x] `PUT /api/users/:id/roles` — set roles array (admin only)
+- [x] `GET /api/users/export` (CSV — roles pipe-delimited, admin only)
+- [x] `POST /api/users/import` (CSV upsert by email, admin only)
+- [x] Frontend: Players tab filled in (player-role directory, searchable, click to edit)
+- [x] Frontend: All Users tab (admin only — all users, role filter, export/import buttons)
+- [x] Frontend: UserDetailsDialog — all editable fields, roles checkboxes, status toggle
 
 ---
 
