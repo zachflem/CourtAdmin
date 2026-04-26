@@ -11,6 +11,7 @@ import eoiRoutes from './routes/eoi';
 import teamsRoutes from './routes/teams';
 import usersRoutes from './routes/users';
 import playersRoutes from './routes/players';
+import roleRequestsRoutes from './routes/roleRequests';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -34,6 +35,7 @@ app.route('/api/eoi', eoiRoutes);
 app.route('/api/teams', teamsRoutes);
 app.route('/api/users', usersRoutes);
 app.route('/api/players', playersRoutes);
+app.route('/api/role-requests', roleRequestsRoutes);
 
 // Serve R2 uploads — must come before the Assets fallback
 app.get('/uploads/:category/:filename', async (c) => {

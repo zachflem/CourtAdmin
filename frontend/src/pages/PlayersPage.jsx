@@ -492,6 +492,109 @@ function AllUsersTab({ users, onEditUser, onImportDone }) {
   );
 }
 
+// ─── Role Requests Tab ───────────────────────────────────────────────────────
+
+function RoleRequestsTab({ onRefresh }) {
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [processing, setProcessing] = useState(null); // id being acted on
+
+  const fetchRequests = useCallback(() => {
+    setLoading(true);
+    apiFetch('/api/role-requests')
+      .then(setRequests)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  async function handleAction(id, status) {
+    setProcessing(id);
+    try {
+      await apiFetch(`/api/role-requests/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+      fetchRequests();
+      onRefresh(); // refresh user list so roles show updated
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessing(null);
+    }
+  }
+
+  if (loading) return <p className="loading-text">Loading…</p>;
+  if (error) return <p className="page-error">{error}</p>;
+
+  return (
+    <div>
+      {requests.length === 0 ? (
+        <p className="empty-text">No pending role requests.</p>
+      ) : (
+        <div className="role-request-list">
+          {requests.map((req) => {
+            const currentRoles = parseRoles(req.current_roles);
+            const requestedRoles = parseRoles(req.requested_roles);
+            const isBusy = processing === req.id;
+            return (
+              <div key={req.id} className="role-request-card">
+                <div className="role-request-header">
+                  <div>
+                    <p className="role-request-name">{req.first_name} {req.last_name}</p>
+                    <p className="role-request-email">{req.email}</p>
+                  </div>
+                  <span className="role-request-date">{formatDate(req.created_at)}</span>
+                </div>
+
+                <div className="role-request-roles">
+                  <div className="role-request-roles-group">
+                    <span className="role-request-roles-label">Current roles</span>
+                    <div className="role-badge-list">
+                      {currentRoles.length > 0
+                        ? currentRoles.map((r) => <RoleBadge key={r} role={r} />)
+                        : <span className="no-roles">none</span>}
+                    </div>
+                  </div>
+                  <div className="role-request-roles-group">
+                    <span className="role-request-roles-label">Requesting</span>
+                    <div className="role-badge-list">
+                      {requestedRoles.map((r) => <RoleBadge key={r} role={r} />)}
+                    </div>
+                  </div>
+                </div>
+
+                {req.justification && (
+                  <p className="role-request-justification">"{req.justification}"</p>
+                )}
+
+                <div className="role-request-actions">
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={isBusy}
+                    onClick={() => handleAction(req.id, 'approved')}
+                  >
+                    {isBusy ? 'Saving…' : 'Approve'}
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    disabled={isBusy}
+                    onClick={() => handleAction(req.id, 'rejected')}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── EOI Card ─────────────────────────────────────────────────────────────────
 
 function EOICard({ eoi, onProcess }) {
@@ -749,10 +852,11 @@ export function PlayersPage() {
   const processedEois = eois.filter((e) => e.status !== 'pending');
 
   const tabs = [
-    { key: 'players',   label: `Players (${players.length})` },
+    { key: 'players',      label: `Players (${players.length})` },
     ...(isAdmin ? [{ key: 'allusers', label: `All Users (${users.length})` }] : []),
-    { key: 'inbox',     label: `EOI Inbox (${pendingEois.length})` },
-    { key: 'processed', label: `Processed (${processedEois.length})` },
+    { key: 'rolerequests', label: 'Role Requests' },
+    { key: 'inbox',        label: `EOI Inbox (${pendingEois.length})` },
+    { key: 'processed',    label: `Processed (${processedEois.length})` },
   ];
 
   function handleUserSaved(updated) {
@@ -793,6 +897,12 @@ export function PlayersPage() {
           {activeTab === 'allusers' && isAdmin && (
             <div className="tab-panel">
               <AllUsersTab users={users} onEditUser={setEditingUser} onImportDone={fetchData} />
+            </div>
+          )}
+
+          {activeTab === 'rolerequests' && (
+            <div className="tab-panel">
+              <RoleRequestsTab onRefresh={fetchData} />
             </div>
           )}
 

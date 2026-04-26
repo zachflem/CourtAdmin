@@ -473,10 +473,10 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 9 — Role Request Workflow
-- [ ] `POST /api/role-requests` (duplicate + pending check)
-- [ ] `GET /api/role-requests` (pending only, committee / admin)
-- [ ] `PUT /api/role-requests/:id` (approve merges roles; reject closes)
-- [ ] Frontend: Role request form (user-facing), Role Approval dialog (admin-facing)
+- [x] `POST /api/role-requests` (duplicate + pending check)
+- [x] `GET /api/role-requests` (pending only, committee / admin)
+- [x] `PUT /api/role-requests/:id` (approve merges roles; reject closes)
+- [x] Frontend: Role request form (user-facing), Role Approval dialog (admin-facing)
 
 ---
 
