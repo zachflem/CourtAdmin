@@ -10,7 +10,7 @@ auth.get('/me', (c) => {
     email: user.email,
     first_name: user.first_name,
     last_name: user.last_name,
-    roles: JSON.parse(user.roles || '[]'),
+    roles: user.roles,
     is_active: user.is_active,
     jersey_number: user.jersey_number,
     age_group: user.age_group,

@@ -481,10 +481,10 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 10 — Player & Parent Dashboard
-- [ ] `GET /api/players/:id`
-- [ ] `PUT /api/players/:id` (own profile fields)
-- [ ] My Teams endpoint (reads junction tables for current user)
-- [ ] Frontend: My Profile tab, My Teams tab
+- [x] `GET /api/players/:id`
+- [x] `PUT /api/players/:id` (own profile fields)
+- [x] My Teams endpoint (reads junction tables for current user)
+- [x] Frontend: My Profile tab, My Teams tab
 
 ---
 

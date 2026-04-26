@@ -1,0 +1,379 @@
+/* ── Page layout ─────────────────────────────────────────────────────────── */
+
+.dp-page {
+  padding: 2rem 2rem 3rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.dp-page-header {
+  margin-bottom: 1.5rem;
+}
+
+.dp-page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary, #1e40af);
+  margin: 0;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────── */
+
+.dp-tab-bar {
+  display: flex;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 1.75rem;
+}
+
+.dp-tab-btn {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.dp-tab-btn:hover { color: #374151; }
+
+.dp-tab-btn--active {
+  color: var(--color-primary, #1e40af);
+  border-bottom-color: var(--color-primary, #1e40af);
+}
+
+.dp-tab-panel { min-height: 200px; }
+
+/* ── State text ──────────────────────────────────────────────────────────── */
+
+.dp-loading,
+.dp-empty {
+  color: #6b7280;
+  font-size: 1rem;
+  padding: 2rem 0;
+}
+
+.dp-error {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.dp-save-success {
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+
+.dp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 7px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.dp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dp-btn-primary {
+  background: var(--color-primary, #1e40af);
+  color: #fff;
+}
+.dp-btn-primary:hover:not(:disabled) { opacity: 0.88; }
+
+.dp-btn-ghost {
+  background: transparent;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+.dp-btn-ghost:hover:not(:disabled) { background: #f3f4f6; }
+
+.dp-btn-sm { padding: 0.3rem 0.75rem; font-size: 0.82rem; }
+
+/* ── Role badges ─────────────────────────────────────────────────────────── */
+
+.dp-role-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.dp-no-roles {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.role-badge--admin     { background: #fef3c7; color: #92400e; }
+.role-badge--committee { background: #ede9fe; color: #5b21b6; }
+.role-badge--coach     { background: #dbeafe; color: #1e40af; }
+.role-badge--manager   { background: #d1fae5; color: #065f46; }
+.role-badge--player    { background: #e0f2fe; color: #0369a1; }
+.role-badge--parent    { background: #fce7f3; color: #9d174d; }
+
+/* ── Identity card ───────────────────────────────────────────────────────── */
+
+.dp-identity-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.dp-identity-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.2rem;
+}
+
+.dp-identity-email {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Profile sections ────────────────────────────────────────────────────── */
+
+.dp-profile { display: flex; flex-direction: column; gap: 0; }
+
+.dp-section {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.dp-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.dp-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9ca3af;
+  margin: 0 0 1rem;
+}
+
+.dp-section-header .dp-section-title { margin-bottom: 0; }
+
+/* ── Field list (dl/dt/dd) ───────────────────────────────────────────────── */
+
+.dp-field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+}
+
+.dp-field {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+}
+
+.dp-field dt {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+  min-width: 160px;
+  flex-shrink: 0;
+}
+
+.dp-field dd {
+  font-size: 0.9rem;
+  color: #111827;
+  margin: 0;
+}
+
+/* ── Edit form ───────────────────────────────────────────────────────────── */
+
+.dp-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dp-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.dp-input {
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #111827;
+  background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.dp-input:focus {
+  outline: 2px solid var(--color-primary, #1e40af);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+.dp-textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.dp-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* ── Teams grid ──────────────────────────────────────────────────────────── */
+
+.dp-teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.dp-team-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dp-team-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dp-team-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.dp-team-age {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--color-primary, #1e40af);
+  color: #fff;
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.dp-team-season {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.dp-active-badge {
+  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+/* ── Role requests ───────────────────────────────────────────────────────── */
+
+.dp-role-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dp-role-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dp-role-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dp-role-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.dp-request-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dp-request-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+}
+
+.dp-request-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}

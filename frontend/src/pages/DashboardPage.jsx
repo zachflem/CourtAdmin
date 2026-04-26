@@ -1,0 +1,468 @@
+import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import './DashboardPage.css';
+
+const API_BASE = import.meta.env.VITE_API_URL || '';
+const ALL_ROLES = ['admin', 'committee', 'coach', 'manager', 'player', 'parent'];
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Request failed (${res.status})`);
+  }
+  return res.json();
+}
+
+function parseRoles(s) {
+  try { return JSON.parse(s || '[]'); } catch { return []; }
+}
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-AU', {
+    day: 'numeric', month: 'short', year: 'numeric',
+  });
+}
+
+function RoleBadge({ role }) {
+  return <span className={`role-badge role-badge--${role}`}>{role}</span>;
+}
+
+// ─── My Profile Tab ───────────────────────────────────────────────────────────
+
+function MyProfileTab({ userId }) {
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ phone: '', address: '', emergency_contact: '', medical_info: '' });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState('');
+
+  const fetchProfile = useCallback(() => {
+    setLoading(true);
+    apiFetch(`/api/players/${userId}`)
+      .then((data) => {
+        setProfile(data);
+        setForm({
+          phone: data.phone || '',
+          address: data.address || '',
+          emergency_contact: data.emergency_contact || '',
+          medical_info: data.medical_info || '',
+        });
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
+
+  function set(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setSaveError('');
+    setSaveSuccess('');
+    setSaving(true);
+    try {
+      const updated = await apiFetch(`/api/players/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          phone: form.phone || null,
+          address: form.address || null,
+          emergency_contact: form.emergency_contact || null,
+          medical_info: form.medical_info || null,
+        }),
+      });
+      setProfile(updated);
+      setEditing(false);
+      setSaveSuccess('Profile updated successfully.');
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) return <p className="dp-loading">Loading…</p>;
+  if (error) return <p className="dp-error">{error}</p>;
+  if (!profile) return null;
+
+  const roles = parseRoles(profile.roles);
+
+  return (
+    <div className="dp-profile">
+
+      {/* Identity card */}
+      <div className="dp-identity-card">
+        <div className="dp-identity-name">
+          {profile.first_name || profile.last_name
+            ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+            : '(no name set)'}
+        </div>
+        <div className="dp-identity-email">{profile.email}</div>
+        <div className="dp-role-list">
+          {roles.length > 0
+            ? roles.map((r) => <RoleBadge key={r} role={r} />)
+            : <span className="dp-no-roles">No roles assigned</span>}
+        </div>
+      </div>
+
+      {/* Club details — read-only */}
+      {(profile.age_group || profile.jersey_number != null || profile.grading_level != null || profile.first_year_registered) && (
+        <div className="dp-section">
+          <h3 className="dp-section-title">Club Details</h3>
+          <dl className="dp-field-list">
+            {profile.age_group && (
+              <div className="dp-field">
+                <dt>Age Group</dt>
+                <dd>{profile.age_group}</dd>
+              </div>
+            )}
+            {profile.jersey_number != null && (
+              <div className="dp-field">
+                <dt>Jersey Number</dt>
+                <dd>#{profile.jersey_number}</dd>
+              </div>
+            )}
+            {profile.grading_level != null && (
+              <div className="dp-field">
+                <dt>Grading Level</dt>
+                <dd>{profile.grading_level}</dd>
+              </div>
+            )}
+            {profile.gender && (
+              <div className="dp-field">
+                <dt>Gender</dt>
+                <dd>{profile.gender}</dd>
+              </div>
+            )}
+            {profile.date_of_birth && (
+              <div className="dp-field">
+                <dt>Date of Birth</dt>
+                <dd>{formatDate(profile.date_of_birth)}</dd>
+              </div>
+            )}
+            {profile.first_year_registered && (
+              <div className="dp-field">
+                <dt>First Year Registered</dt>
+                <dd>{new Date(profile.first_year_registered).getFullYear()}</dd>
+              </div>
+            )}
+            {profile.clearance_required ? (
+              <div className="dp-field">
+                <dt>Clearance Status</dt>
+                <dd>{profile.clearance_status || 'Pending'}</dd>
+              </div>
+            ) : null}
+          </dl>
+        </div>
+      )}
+
+      {/* Contact & personal — editable */}
+      <div className="dp-section">
+        <div className="dp-section-header">
+          <h3 className="dp-section-title">Contact &amp; Personal</h3>
+          {!editing && (
+            <button className="dp-btn dp-btn-ghost dp-btn-sm" onClick={() => { setSaveSuccess(''); setEditing(true); }}>
+              Edit
+            </button>
+          )}
+        </div>
+
+        {saveSuccess && !editing && (
+          <p className="dp-save-success">{saveSuccess}</p>
+        )}
+
+        {editing ? (
+          <form onSubmit={handleSave} className="dp-edit-form">
+            <label className="dp-field-label">
+              Phone
+              <input className="dp-input" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+            </label>
+            <label className="dp-field-label">
+              Address
+              <input className="dp-input" value={form.address} onChange={(e) => set('address', e.target.value)} />
+            </label>
+            <label className="dp-field-label">
+              Emergency Contact
+              <input
+                className="dp-input"
+                placeholder="Name — phone"
+                value={form.emergency_contact}
+                onChange={(e) => set('emergency_contact', e.target.value)}
+              />
+            </label>
+            <label className="dp-field-label">
+              Medical Info
+              <textarea
+                className="dp-input dp-textarea"
+                rows={3}
+                value={form.medical_info}
+                onChange={(e) => set('medical_info', e.target.value)}
+              />
+            </label>
+
+            {saveError && <p className="dp-error">{saveError}</p>}
+
+            <div className="dp-form-actions">
+              <button type="button" className="dp-btn dp-btn-ghost dp-btn-sm" onClick={() => setEditing(false)} disabled={saving}>
+                Cancel
+              </button>
+              <button type="submit" className="dp-btn dp-btn-primary dp-btn-sm" disabled={saving}>
+                {saving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <dl className="dp-field-list">
+            <div className="dp-field">
+              <dt>Phone</dt>
+              <dd>{profile.phone || '—'}</dd>
+            </div>
+            <div className="dp-field">
+              <dt>Address</dt>
+              <dd>{profile.address || '—'}</dd>
+            </div>
+            <div className="dp-field">
+              <dt>Emergency Contact</dt>
+              <dd>{profile.emergency_contact || '—'}</dd>
+            </div>
+            <div className="dp-field">
+              <dt>Medical Info</dt>
+              <dd>{profile.medical_info || '—'}</dd>
+            </div>
+          </dl>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── My Teams Tab ─────────────────────────────────────────────────────────────
+
+function MyTeamsTab({ userId }) {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiFetch(`/api/players/${userId}/teams`)
+      .then(setTeams)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <p className="dp-loading">Loading…</p>;
+  if (error) return <p className="dp-error">{error}</p>;
+
+  if (teams.length === 0) {
+    return <p className="dp-empty">You are not assigned to any teams yet.</p>;
+  }
+
+  return (
+    <div className="dp-teams-grid">
+      {teams.map((team) => (
+        <div key={team.id} className="dp-team-card">
+          <div className="dp-team-name">{team.name}</div>
+          <div className="dp-team-meta">
+            <span className="dp-team-age">{team.age_group}</span>
+            <span className="dp-team-season">{team.season_name}</span>
+          </div>
+          {team.season_is_active ? (
+            <span className="dp-active-badge">Active Season</span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Role Requests Tab ────────────────────────────────────────────────────────
+
+const STATUS_COLOR = { pending: '#d97706', approved: '#16a34a', rejected: '#dc2626' };
+
+function RoleRequestsTab({ user }) {
+  const currentRoles = parseRoles(user.roles);
+  const available = ALL_ROLES.filter((r) => !currentRoles.includes(r));
+
+  const [myRequests, setMyRequests] = useState([]);
+  const [selected, setSelected] = useState([]);
+  const [justification, setJustification] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const fetchMyRequests = useCallback(() => {
+    apiFetch('/api/role-requests/my')
+      .then(setMyRequests)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => { fetchMyRequests(); }, [fetchMyRequests]);
+
+  const pendingRoles = myRequests
+    .filter((r) => r.status === 'pending')
+    .flatMap((r) => parseRoles(r.requested_roles));
+
+  const requestable = available.filter((r) => !pendingRoles.includes(r));
+
+  function toggleRole(role) {
+    setSelected((prev) =>
+      prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    if (selected.length === 0) return;
+    setError('');
+    setSuccess('');
+    setSubmitting(true);
+    try {
+      await apiFetch('/api/role-requests', {
+        method: 'POST',
+        body: JSON.stringify({ roles: selected, justification: justification || undefined }),
+      });
+      setSelected([]);
+      setJustification('');
+      setSuccess('Request submitted successfully.');
+      fetchMyRequests();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="dp-role-section">
+      <div className="dp-section">
+        <h3 className="dp-section-title">Your Current Roles</h3>
+        <div className="dp-role-list" style={{ marginTop: '0.5rem' }}>
+          {currentRoles.length > 0
+            ? currentRoles.map((r) => <RoleBadge key={r} role={r} />)
+            : <span className="dp-no-roles">No roles assigned yet.</span>}
+        </div>
+      </div>
+
+      <div className="dp-section">
+        <h3 className="dp-section-title">Request Additional Roles</h3>
+        {requestable.length > 0 ? (
+          <form onSubmit={handleSubmit} className="dp-role-form">
+            <div className="dp-role-checkboxes">
+              {requestable.map((role) => (
+                <label key={role} className="dp-role-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(role)}
+                    onChange={() => toggleRole(role)}
+                  />
+                  <span>{role}</span>
+                </label>
+              ))}
+            </div>
+
+            <textarea
+              className="dp-input dp-textarea"
+              placeholder="Justification (optional)"
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              rows={3}
+            />
+
+            {error && <p className="dp-error">{error}</p>}
+            {success && <p className="dp-save-success">{success}</p>}
+
+            <div className="dp-form-actions">
+              <button
+                type="submit"
+                className="dp-btn dp-btn-primary dp-btn-sm"
+                disabled={submitting || selected.length === 0}
+              >
+                {submitting ? 'Submitting…' : 'Submit Request'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <p className="dp-empty" style={{ paddingTop: '0.5rem' }}>
+            {available.length === 0
+              ? 'You have all available roles.'
+              : 'You already have pending requests for all available roles.'}
+          </p>
+        )}
+      </div>
+
+      {myRequests.length > 0 && (
+        <div className="dp-section">
+          <h3 className="dp-section-title">My Requests</h3>
+          <div className="dp-request-list">
+            {myRequests.map((req) => (
+              <div key={req.id} className="dp-request-row">
+                <div className="dp-role-list">
+                  {parseRoles(req.requested_roles).map((r) => <RoleBadge key={r} role={r} />)}
+                </div>
+                <span
+                  className="dp-request-status"
+                  style={{ color: STATUS_COLOR[req.status] ?? '#6b7280' }}
+                >
+                  {req.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── DashboardPage ────────────────────────────────────────────────────────────
+
+export function DashboardPage() {
+  const { user } = useAuth();
+  const roles = parseRoles(user?.roles);
+  const isPlayer = roles.includes('player');
+
+  const tabs = [
+    { key: 'profile', label: 'My Profile' },
+    ...(isPlayer ? [{ key: 'teams', label: 'My Teams' }] : []),
+    { key: 'roles', label: 'Role Requests' },
+  ];
+
+  const [activeTab, setActiveTab] = useState('profile');
+
+  return (
+    <div className="dp-page">
+      <div className="dp-page-header">
+        <h1 className="dp-page-title">Dashboard</h1>
+      </div>
+
+      <div className="dp-tab-bar">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            className={`dp-tab-btn${activeTab === t.key ? ' dp-tab-btn--active' : ''}`}
+            onClick={() => setActiveTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="dp-tab-panel">
+        {activeTab === 'profile' && <MyProfileTab userId={user.id} />}
+        {activeTab === 'teams' && isPlayer && <MyTeamsTab userId={user.id} />}
+        {activeTab === 'roles' && <RoleRequestsTab user={user} />}
+      </div>
+    </div>
+  );
+}
