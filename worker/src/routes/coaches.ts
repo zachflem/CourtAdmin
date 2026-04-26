@@ -100,3 +100,31 @@ managersRouter.get('/:id/players', async (c) => {
 
   return c.json(results);
 });
+
+// ── Parents ───────────────────────────────────────────────────────────────────
+
+export const parentsRouter = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
+
+parentsRouter.use('/*', authMiddleware);
+
+// GET /api/parents/:id/children — player accounts linked to this parent via approved EOIs
+parentsRouter.get('/:id/children', async (c) => {
+  const caller = c.get('user');
+  const id = c.req.param('id');
+  if (!canViewStaffData(caller, id)) return c.json({ error: 'Forbidden' }, 403);
+
+  const parent = await c.env.DB.prepare(
+    'SELECT email FROM users WHERE id = ?'
+  ).bind(id).first<{ email: string }>();
+  if (!parent) return c.json({ error: 'Not found' }, 404);
+
+  const { results } = await c.env.DB.prepare(`
+    SELECT DISTINCT u.id, u.first_name, u.last_name, u.email, u.jersey_number, u.age_group
+    FROM eois e
+    JOIN users u ON u.id = e.created_user_id
+    WHERE e.parent_guardian_email = ? AND e.status = 'approved' AND e.created_user_id IS NOT NULL
+    ORDER BY u.last_name, u.first_name
+  `).bind(parent.email).all();
+
+  return c.json(results);
+});

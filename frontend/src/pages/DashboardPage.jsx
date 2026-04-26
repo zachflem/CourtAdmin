@@ -396,6 +396,366 @@ function StaffPlayersTab({ userId, staffType, emptyLabel }) {
   );
 }
 
+// ─── Shared: feedback card ────────────────────────────────────────────────────
+
+const TYPE_COLORS = {
+  technical: '#1d4ed8',
+  tactical:  '#0369a1',
+  physical:  '#15803d',
+  mental:    '#7c3aed',
+  general:   '#6b7280',
+};
+
+function FeedbackCard({ fb, showPlayer = false }) {
+  const color = TYPE_COLORS[fb.feedback_type] || '#6b7280';
+  return (
+    <div className="dp-fb-card">
+      <div className="dp-fb-card-header">
+        <span className="dp-fb-title">{fb.title}</span>
+        <span className="dp-fb-type" style={{ background: `${color}18`, color }}>
+          {fb.feedback_type}
+        </span>
+      </div>
+      {showPlayer && (
+        <div className="dp-fb-player">
+          {fb.player_first_name || fb.player_last_name
+            ? `${fb.player_first_name || ''} ${fb.player_last_name || ''}`.trim()
+            : '—'}{fb.player_age_group ? ` · ${fb.player_age_group}` : ''}
+        </div>
+      )}
+      <div className="dp-fb-meta">
+        {!showPlayer && (
+          <span>
+            Coach: {fb.coach_first_name || fb.coach_last_name
+              ? `${fb.coach_first_name || ''} ${fb.coach_last_name || ''}`.trim()
+              : '—'}
+          </span>
+        )}
+        {fb.rating != null && (
+          <span className="dp-fb-rating">
+            {'★'.repeat(fb.rating)}{'☆'.repeat(5 - fb.rating)}
+          </span>
+        )}
+        <span>{formatDate(fb.created_at)}</span>
+      </div>
+      <p className="dp-fb-content">{fb.content}</p>
+    </div>
+  );
+}
+
+// ─── My Feedback Tab (player) ─────────────────────────────────────────────────
+
+function MyFeedbackTab({ userId }) {
+  const [feedback, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiFetch(`/api/players/${userId}/feedback`)
+      .then(setFeedback)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <p className="dp-loading">Loading…</p>;
+  if (error) return <p className="dp-error">{error}</p>;
+  if (feedback.length === 0) {
+    return <p className="dp-empty">No feedback received yet.</p>;
+  }
+
+  return (
+    <div className="dp-fb-list">
+      {feedback.map((fb) => <FeedbackCard key={fb.id} fb={fb} />)}
+    </div>
+  );
+}
+
+// ─── Coach Feedback Tab ───────────────────────────────────────────────────────
+
+const FEEDBACK_TYPES = ['technical', 'tactical', 'physical', 'mental', 'general'];
+
+function CreateFeedbackDialog({ coachId, onClose, onCreated }) {
+  const [players, setPlayers] = useState([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
+  const [form, setForm] = useState({
+    player_id: '',
+    title: '',
+    feedback_type: 'general',
+    rating: '',
+    content: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiFetch(`/api/coaches/${coachId}/players`)
+      .then(setPlayers)
+      .catch(() => {})
+      .finally(() => setLoadingPlayers(false));
+  }, [coachId]);
+
+  function set(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    if (!form.player_id) { setError('Select a player.'); return; }
+    if (!form.title.trim()) { setError('Title is required.'); return; }
+    if (!form.content.trim()) { setError('Content is required.'); return; }
+    setSaving(true);
+    try {
+      await apiFetch(`/api/players/${form.player_id}/feedback`, {
+        method: 'POST',
+        body: JSON.stringify({
+          title: form.title.trim(),
+          content: form.content.trim(),
+          feedback_type: form.feedback_type,
+          rating: form.rating ? Number(form.rating) : null,
+        }),
+      });
+      onCreated();
+    } catch (err) {
+      setError(err.message);
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="dialog-backdrop" onClick={onClose}>
+      <div className="dialog" onClick={(e) => e.stopPropagation()}>
+        <h2 className="dialog-title">Create Feedback</h2>
+
+        {loadingPlayers ? (
+          <p className="dp-loading">Loading players…</p>
+        ) : players.length === 0 ? (
+          <p className="dp-empty">No players on your teams yet.</p>
+        ) : (
+          <form onSubmit={handleSubmit} className="dp-edit-form">
+            <label className="dp-field-label">
+              Player
+              <select
+                className="dp-input"
+                value={form.player_id}
+                onChange={(e) => set('player_id', e.target.value)}
+                required
+              >
+                <option value="">— select player —</option>
+                {players.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {`${p.first_name || ''} ${p.last_name || ''}`.trim() || p.email}
+                    {p.age_group ? ` (${p.age_group})` : ''}
+                    {p.jersey_number != null ? ` #${p.jersey_number}` : ''}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="dp-field-label">
+              Title
+              <input
+                className="dp-input"
+                value={form.title}
+                onChange={(e) => set('title', e.target.value)}
+                placeholder="e.g. Session feedback – 3 April"
+                required
+              />
+            </label>
+
+            <div className="dp-fb-form-row">
+              <label className="dp-field-label" style={{ flex: 1 }}>
+                Type
+                <select
+                  className="dp-input"
+                  value={form.feedback_type}
+                  onChange={(e) => set('feedback_type', e.target.value)}
+                >
+                  {FEEDBACK_TYPES.map((t) => (
+                    <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="dp-field-label" style={{ flex: 1 }}>
+                Rating (optional)
+                <select
+                  className="dp-input"
+                  value={form.rating}
+                  onChange={(e) => set('rating', e.target.value)}
+                >
+                  <option value="">— no rating —</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n}>{'★'.repeat(n)} ({n})</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="dp-field-label">
+              Feedback
+              <textarea
+                className="dp-input dp-textarea"
+                rows={5}
+                value={form.content}
+                onChange={(e) => set('content', e.target.value)}
+                placeholder="Enter your feedback…"
+                required
+              />
+            </label>
+
+            {error && <p className="dp-error">{error}</p>}
+
+            <div className="dp-form-actions">
+              <button type="button" className="dp-btn dp-btn-ghost dp-btn-sm" onClick={onClose} disabled={saving}>
+                Cancel
+              </button>
+              <button type="submit" className="dp-btn dp-btn-primary dp-btn-sm" disabled={saving}>
+                {saving ? 'Saving…' : 'Submit Feedback'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CoachFeedbackTab({ userId }) {
+  const [feedback, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
+
+  const fetchFeedback = useCallback(() => {
+    setLoading(true);
+    apiFetch('/api/feedback/my-teams')
+      .then(setFeedback)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { fetchFeedback(); }, [fetchFeedback]);
+
+  const q = search.toLowerCase();
+  const filtered = feedback.filter((fb) => {
+    const playerName = `${fb.player_first_name || ''} ${fb.player_last_name || ''}`.toLowerCase();
+    const matchSearch = !q || playerName.includes(q) || fb.title.toLowerCase().includes(q);
+    const matchType = !typeFilter || fb.feedback_type === typeFilter;
+    return matchSearch && matchType;
+  });
+
+  return (
+    <div className="dp-staff-players">
+      <div className="dp-fb-toolbar">
+        <div className="dp-fb-filters">
+          <input
+            className="dp-input dp-search-input"
+            placeholder="Search player or title…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select
+            className="dp-input"
+            style={{ maxWidth: 160 }}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+          >
+            <option value="">All types</option>
+            {FEEDBACK_TYPES.map((t) => (
+              <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+            ))}
+          </select>
+        </div>
+        <button className="dp-btn dp-btn-primary dp-btn-sm" onClick={() => setShowCreate(true)}>
+          + Create Feedback
+        </button>
+      </div>
+
+      {loading ? (
+        <p className="dp-loading">Loading…</p>
+      ) : error ? (
+        <p className="dp-error">{error}</p>
+      ) : feedback.length === 0 ? (
+        <p className="dp-empty">No feedback for your teams yet. Use the button above to create the first entry.</p>
+      ) : filtered.length === 0 ? (
+        <p className="dp-empty">No feedback matches your filters.</p>
+      ) : (
+        <div className="dp-fb-list">
+          {filtered.map((fb) => <FeedbackCard key={fb.id} fb={fb} showPlayer />)}
+        </div>
+      )}
+
+      {showCreate && (
+        <CreateFeedbackDialog
+          coachId={userId}
+          onClose={() => setShowCreate(false)}
+          onCreated={() => { setShowCreate(false); fetchFeedback(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Parent Feedback Tab ──────────────────────────────────────────────────────
+
+function ParentFeedbackTab({ userId }) {
+  const [children, setChildren] = useState([]);
+  const [feedbackMap, setFeedbackMap] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiFetch(`/api/parents/${userId}/children`)
+      .then(async (kids) => {
+        setChildren(kids);
+        if (kids.length === 0) return;
+        const entries = await Promise.all(
+          kids.map((k) =>
+            apiFetch(`/api/players/${k.id}/feedback`)
+              .then((fb) => [k.id, fb])
+              .catch(() => [k.id, []])
+          )
+        );
+        setFeedbackMap(Object.fromEntries(entries));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <p className="dp-loading">Loading…</p>;
+  if (error) return <p className="dp-error">{error}</p>;
+  if (children.length === 0) {
+    return <p className="dp-empty">No linked child accounts found.</p>;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      {children.map((child) => {
+        const fb = feedbackMap[child.id] || [];
+        const name = `${child.first_name || ''} ${child.last_name || ''}`.trim() || child.email;
+        return (
+          <div key={child.id} className="dp-section">
+            <h3 className="dp-section-title">
+              {name}{child.age_group ? ` · ${child.age_group}` : ''}
+              {child.jersey_number != null ? ` · #${child.jersey_number}` : ''}
+            </h3>
+            {fb.length === 0 ? (
+              <p className="dp-empty" style={{ paddingTop: 0 }}>No feedback yet.</p>
+            ) : (
+              <div className="dp-fb-list">
+                {fb.map((f) => <FeedbackCard key={f.id} fb={f} />)}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Role Requests Tab ────────────────────────────────────────────────────────
 
 const STATUS_COLOR = { pending: '#d97706', approved: '#16a34a', rejected: '#dc2626' };
@@ -543,18 +903,24 @@ export function DashboardPage() {
   const isPlayer = roles.includes('player');
   const isCoach = roles.includes('coach');
   const isManager = roles.includes('manager');
+  const isParent = roles.includes('parent');
 
   const tabs = [
     { key: 'profile', label: 'My Profile' },
-    ...(isPlayer ? [{ key: 'teams', label: 'My Teams' }] : []),
+    ...(isPlayer ? [
+      { key: 'teams', label: 'My Teams' },
+      { key: 'my-feedback', label: 'My Feedback' },
+    ] : []),
     ...(isCoach ? [
       { key: 'coach-teams', label: 'Teams I Coach' },
       { key: 'coach-players', label: 'My Players' },
+      { key: 'coach-feedback', label: 'Feedback' },
     ] : []),
     ...(isManager ? [
       { key: 'manager-teams', label: 'Teams I Manage' },
       { key: 'manager-players', label: 'Managed Players' },
     ] : []),
+    ...(isParent ? [{ key: 'parent-feedback', label: "Children's Feedback" }] : []),
     { key: 'roles', label: 'Role Requests' },
   ];
 
@@ -581,18 +947,21 @@ export function DashboardPage() {
       <div className="dp-tab-panel">
         {activeTab === 'profile' && <MyProfileTab userId={user.id} />}
         {activeTab === 'teams' && isPlayer && <MyTeamsTab userId={user.id} />}
+        {activeTab === 'my-feedback' && isPlayer && <MyFeedbackTab userId={user.id} />}
         {activeTab === 'coach-teams' && isCoach && (
           <StaffTeamsTab userId={user.id} staffType="coaches" emptyLabel="coach" />
         )}
         {activeTab === 'coach-players' && isCoach && (
           <StaffPlayersTab userId={user.id} staffType="coaches" emptyLabel="coached" />
         )}
+        {activeTab === 'coach-feedback' && isCoach && <CoachFeedbackTab userId={user.id} />}
         {activeTab === 'manager-teams' && isManager && (
           <StaffTeamsTab userId={user.id} staffType="managers" emptyLabel="manager" />
         )}
         {activeTab === 'manager-players' && isManager && (
           <StaffPlayersTab userId={user.id} staffType="managers" emptyLabel="managed" />
         )}
+        {activeTab === 'parent-feedback' && isParent && <ParentFeedbackTab userId={user.id} />}
         {activeTab === 'roles' && <RoleRequestsTab user={user} />}
       </div>
     </div>

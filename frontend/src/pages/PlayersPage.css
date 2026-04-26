@@ -725,3 +725,26 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── All Feedback tab ────────────────────────────────────────────────────── */
+
+.all-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.all-feedback-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.all-feedback-count {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-left: auto;
+}
+
+.font-medium { font-weight: 600; }

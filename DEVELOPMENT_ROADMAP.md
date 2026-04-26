@@ -501,11 +501,12 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 12 — Player Feedback System
-- [ ] `GET /api/players/:id/feedback` (role-based visibility)
-- [ ] `POST /api/players/:id/feedback` (coach / committee)
-- [ ] `GET /api/feedback` (committee — all)
-- [ ] `GET /api/feedback/my-teams` (coach — own teams only)
-- [ ] Frontend: Create Feedback dialog, Coach Feedback view, My Feedback tab (player), All Feedback view (committee), parent view of children's feedback
+- [x] `GET /api/players/:id/feedback` (role-based visibility)
+- [x] `POST /api/players/:id/feedback` (coach / committee)
+- [x] `GET /api/feedback` (committee — all)
+- [x] `GET /api/feedback/my-teams` (coach — own teams only)
+- [x] `GET /api/parents/:id/children` — player accounts linked to a parent via approved EOIs
+- [x] Frontend: Create Feedback dialog, Coach Feedback view, My Feedback tab (player), All Feedback view (committee), parent view of children's feedback
 
 ---
 

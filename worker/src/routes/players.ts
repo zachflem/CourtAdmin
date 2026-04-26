@@ -136,4 +136,98 @@ app.get('/:id/teams', async (c) => {
   return c.json(results);
 });
 
+const FEEDBACK_TYPES = ['technical', 'tactical', 'physical', 'mental', 'general'];
+
+// GET /api/players/:id/feedback — role-based visibility
+// admin/committee/coach/manager: see all; player: own only; parent: children's
+app.get('/:id/feedback', async (c) => {
+  const caller = c.get('user');
+  const playerId = c.req.param('id');
+  const callerRoles = parseRoles(caller.roles);
+
+  const isPrivileged = callerRoles.some((r) =>
+    ['admin', 'committee', 'coach', 'manager'].includes(r)
+  );
+  const isOwnPlayer = caller.id === playerId;
+  const isParent = callerRoles.includes('parent') && !isPrivileged;
+
+  if (!isPrivileged && !isOwnPlayer && !isParent) {
+    return c.json({ error: 'Forbidden' }, 403);
+  }
+
+  // Parent: verify this player is their child via an approved EOI
+  if (isParent && !isOwnPlayer) {
+    const link = await c.env.DB.prepare(
+      `SELECT 1 FROM eois
+       WHERE parent_guardian_email = ? AND created_user_id = ? AND status = 'approved'
+       LIMIT 1`
+    ).bind(caller.email, playerId).first();
+    if (!link) return c.json({ error: 'Forbidden' }, 403);
+  }
+
+  const { results } = await c.env.DB.prepare(`
+    SELECT pf.*,
+           coach.first_name AS coach_first_name, coach.last_name AS coach_last_name
+    FROM player_feedback pf
+    JOIN users coach ON coach.id = pf.coach_id
+    WHERE pf.player_id = ?
+    ORDER BY pf.created_at DESC
+  `).bind(playerId).all();
+
+  return c.json(results);
+});
+
+// POST /api/players/:id/feedback — coach / committee / admin only
+app.post('/:id/feedback', async (c) => {
+  const denied = requireRole(c, ['admin', 'committee', 'coach']);
+  if (denied) return denied;
+
+  const caller = c.get('user');
+  const playerId = c.req.param('id');
+  const callerRoles = parseRoles(caller.roles);
+
+  // Coaches (without admin/committee) can only submit feedback for players on their teams
+  const isCoachOnly =
+    callerRoles.includes('coach') &&
+    !callerRoles.some((r) => ['admin', 'committee'].includes(r));
+
+  if (isCoachOnly) {
+    const onTeam = await c.env.DB.prepare(`
+      SELECT 1 FROM team_coaches tc
+      JOIN team_players tp ON tp.team_id = tc.team_id
+      WHERE tc.user_id = ? AND tp.user_id = ?
+      LIMIT 1
+    `).bind(caller.id, playerId).first();
+    if (!onTeam) return c.json({ error: 'Player is not on any of your teams' }, 403);
+  }
+
+  const body = await c.req.json<{
+    title: string;
+    content: string;
+    feedback_type: string;
+    rating?: number | null;
+  }>();
+
+  if (!body.title?.trim() || !body.content?.trim() || !body.feedback_type) {
+    return c.json({ error: 'title, content, and feedback_type are required' }, 400);
+  }
+  if (!FEEDBACK_TYPES.includes(body.feedback_type)) {
+    return c.json({ error: `feedback_type must be one of: ${FEEDBACK_TYPES.join(', ')}` }, 400);
+  }
+  if (body.rating != null && (body.rating < 1 || body.rating > 5)) {
+    return c.json({ error: 'rating must be 1–5' }, 400);
+  }
+
+  const result = await c.env.DB.prepare(`
+    INSERT INTO player_feedback (player_id, coach_id, title, content, feedback_type, rating)
+    VALUES (?, ?, ?, ?, ?, ?)
+    RETURNING *
+  `).bind(
+    playerId, caller.id, body.title.trim(), body.content.trim(),
+    body.feedback_type, body.rating ?? null,
+  ).first();
+
+  return c.json(result, 201);
+});
+
 export default app;

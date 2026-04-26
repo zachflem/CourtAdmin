@@ -806,6 +806,140 @@ function EOIProcessDialog({ eoi, onClose, onDone }) {
   );
 }
 
+// ─── All Feedback Tab (admin / committee) ─────────────────────────────────────
+
+const FB_TYPES = ['technical', 'tactical', 'physical', 'mental', 'general'];
+
+const FB_TYPE_COLORS = {
+  technical: '#1d4ed8',
+  tactical:  '#0369a1',
+  physical:  '#15803d',
+  mental:    '#7c3aed',
+  general:   '#6b7280',
+};
+
+function AllFeedbackTab() {
+  const [feedback, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [expanded, setExpanded] = useState(null);
+
+  useEffect(() => {
+    apiFetch('/api/feedback')
+      .then(setFeedback)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <p className="loading-text">Loading…</p>;
+  if (error) return <p className="page-error">{error}</p>;
+
+  const q = search.toLowerCase();
+  const filtered = feedback.filter((fb) => {
+    const player = `${fb.player_first_name || ''} ${fb.player_last_name || ''}`.toLowerCase();
+    const coach = `${fb.coach_first_name || ''} ${fb.coach_last_name || ''}`.toLowerCase();
+    const matchSearch = !q || player.includes(q) || coach.includes(q) || fb.title.toLowerCase().includes(q);
+    const matchType = !typeFilter || fb.feedback_type === typeFilter;
+    return matchSearch && matchType;
+  });
+
+  return (
+    <div className="all-feedback">
+      <div className="all-feedback-filters">
+        <input
+          className="field-input"
+          style={{ maxWidth: 280 }}
+          placeholder="Search player, coach, or title…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className="field-input"
+          style={{ maxWidth: 160 }}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+        >
+          <option value="">All types</option>
+          {FB_TYPES.map((t) => (
+            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+          ))}
+        </select>
+        <span className="all-feedback-count">
+          {filtered.length} of {feedback.length} entries
+        </span>
+      </div>
+
+      {feedback.length === 0 ? (
+        <p className="empty-text">No feedback recorded yet.</p>
+      ) : filtered.length === 0 ? (
+        <p className="empty-text">No feedback matches your filters.</p>
+      ) : (
+        <div className="table-wrapper">
+          <table className="processed-table">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Age</th>
+                <th>Coach</th>
+                <th>Type</th>
+                <th>Rating</th>
+                <th>Title</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((fb) => {
+                const color = FB_TYPE_COLORS[fb.feedback_type] || '#6b7280';
+                const isOpen = expanded === fb.id;
+                return (
+                  <>
+                    <tr
+                      key={fb.id}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setExpanded(isOpen ? null : fb.id)}
+                    >
+                      <td className="font-medium">
+                        {`${fb.player_first_name || ''} ${fb.player_last_name || ''}`.trim() || '—'}
+                      </td>
+                      <td>{fb.player_age_group || '—'}</td>
+                      <td>{`${fb.coach_first_name || ''} ${fb.coach_last_name || ''}`.trim() || '—'}</td>
+                      <td>
+                        <span
+                          style={{
+                            background: `${color}18`, color, fontWeight: 600,
+                            fontSize: '0.72rem', padding: '2px 8px', borderRadius: 999,
+                            textTransform: 'capitalize',
+                          }}
+                        >
+                          {fb.feedback_type}
+                        </span>
+                      </td>
+                      <td style={{ color: '#d97706' }}>
+                        {fb.rating != null ? '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating) : '—'}
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{fb.title}</td>
+                      <td style={{ color: '#6b7280', fontSize: '0.82rem' }}>{formatDate(fb.created_at)}</td>
+                    </tr>
+                    {isOpen && (
+                      <tr key={`${fb.id}-expand`}>
+                        <td colSpan={7} style={{ background: '#f9fafb', padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#374151' }}>
+                          {fb.content}
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export function PlayersPage() {
@@ -857,6 +991,7 @@ export function PlayersPage() {
     { key: 'rolerequests', label: 'Role Requests' },
     { key: 'inbox',        label: `EOI Inbox (${pendingEois.length})` },
     { key: 'processed',    label: `Processed (${processedEois.length})` },
+    { key: 'feedback',     label: 'All Feedback' },
   ];
 
   function handleUserSaved(updated) {
@@ -939,6 +1074,12 @@ export function PlayersPage() {
                   </table>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'feedback' && (
+            <div className="tab-panel">
+              <AllFeedbackTab />
             </div>
           )}
         </>
