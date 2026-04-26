@@ -56,9 +56,14 @@ npx wrangler secret put CF_ACCESS_AUD
 
 # Resend API key (from resend.com → API Keys)
 npx wrangler secret put RESEND_API_KEY
+
+# Bootstrap admin email — the first login from this address is auto-provisioned with roles=["admin"]
+npx wrangler secret put ADMIN_SEED_EMAIL
 ```
 
-Both commands prompt for the value interactively.
+All commands prompt for the value interactively.
+
+**How `ADMIN_SEED_EMAIL` works:** When a new user authenticates for the first time, the Worker checks whether their email matches this secret. If it does, they are provisioned with `roles = ["admin"]` instead of the default `roles = []`. The check only runs at first-provision (new account creation) — it has no effect on existing accounts, so changing the secret later does not affect any already-created users.
 
 `RESEND_FROM_EMAIL` is set as a plain var in `wrangler.toml` (not a secret). The default is `onboarding@resend.dev` (works on Resend's free tier). For production, change it to a verified sender address on your Resend account, e.g. `noreply@yourdomain.com`.
 
@@ -126,18 +131,14 @@ The Worker serves:
 
 ---
 
-## Step 6 — Seed the Admin User
+## Step 6 — First Admin Login
 
-**🤖 automatable**
+No manual database seed is required. The `ADMIN_SEED_EMAIL` secret (set in Step 2) handles bootstrapping automatically.
 
-Insert the first admin user directly into D1. Replace the email and name with the real values.
-
-```bash
-npx wrangler d1 execute court-admin-db --remote --command \
-  "INSERT INTO users (id, email, first_name, last_name, roles, is_active, created_at, updated_at)
-   VALUES (lower(hex(randomblob(16))), 'admin@yourdomain.com', 'Admin', 'User', '[\"admin\"]', 1, datetime('now'), datetime('now'))
-   ON CONFLICT(email) DO UPDATE SET roles = '[\"admin\"]';"
-```
+1. Make sure `ADMIN_SEED_EMAIL` is set to the admin's email address.
+2. The admin navigates to the app and signs in via Cloudflare Access (email OTP).
+3. On first login the Worker auto-provisions their account with `roles = ["admin"]`.
+4. All subsequent logins read the existing DB record — the secret has no further effect.
 
 ---
 
@@ -186,8 +187,8 @@ Wrangler tracks which migrations have already been applied and only runs new one
 ## Checklist — Fresh Instance
 
 - [ ] Step 1: CF Access application created for `courtadmin.seezed.net`, AUD tag copied
-- [ ] Step 2: Worker secrets set (`CF_ACCESS_AUD`, `RESEND_API_KEY`)
+- [ ] Step 2: Worker secrets set (`CF_ACCESS_AUD`, `RESEND_API_KEY`, `ADMIN_SEED_EMAIL`)
 - [ ] Step 3: D1 database created, ID in `wrangler.toml`, migrations applied
 - [ ] Step 4: R2 bucket created
 - [ ] Step 5: `npm run deploy` — builds frontend and deploys Worker + static assets
-- [ ] Step 6: Admin user seeded
+- [ ] Step 6: Admin logs in for the first time — auto-provisioned with `roles = ["admin"]`

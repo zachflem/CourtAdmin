@@ -1,8 +1,6 @@
 import type { Context, Next } from 'hono';
 import type { Env, HonoVariables, User } from '../types';
 
-const AUTO_PROVISION_ROLES = JSON.stringify([]);
-
 export async function authMiddleware(
   c: Context<{ Bindings: Env; Variables: HonoVariables }>,
   next: Next
@@ -25,11 +23,14 @@ export async function authMiddleware(
   if (!user) {
     const id = crypto.randomUUID();
     const now = new Date().toISOString();
+    const isAdminSeed = c.env.ADMIN_SEED_EMAIL &&
+      email.toLowerCase() === c.env.ADMIN_SEED_EMAIL.toLowerCase();
+    const roles = JSON.stringify(isAdminSeed ? ['admin'] : []);
     await c.env.DB.prepare(
       `INSERT INTO users (id, email, roles, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?)`
     )
-      .bind(id, email, AUTO_PROVISION_ROLES, now, now)
+      .bind(id, email, roles, now, now)
       .run();
 
     user = await c.env.DB.prepare(

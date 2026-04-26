@@ -6,6 +6,7 @@ export interface Env {
   RESEND_FROM_EMAIL: string;
   CF_ACCESS_AUD: string;
   FRONTEND_URL: string;
+  ADMIN_SEED_EMAIL?: string;
 }
 
 export interface User {
