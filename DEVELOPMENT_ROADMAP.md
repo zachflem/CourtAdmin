@@ -143,7 +143,9 @@ Fields: `id`, `name`, `start_date`, `end_date`, `age_cutoff_date` (configurable,
 
 D1 tables: `teams`, `team_players` (junction), `team_coaches` (junction), `team_managers` (junction)
 
-`teams` fields: `id`, `name`, `season_id`, `age_group`
+`teams` fields: `id`, `name`, `season_id`, `age_group`, `division`
+
+> `division` is currently a free-text field populated from a hardcoded list (Div 1 / Div 2 / Div 3). A future Club Customization option will allow the admin to configure the divisions list.
 
 **Endpoints (committee / admin):**
 - `GET /api/teams?season_id=` — list teams, optionally filtered by season

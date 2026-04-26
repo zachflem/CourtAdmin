@@ -5,6 +5,7 @@ import './TeamsPage.css';
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const DIVISIONS = ['Div 1', 'Div 2', 'Div 3'];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
     name: '',
     season_id: preselectedSeasonId || (seasons[0]?.id ?? ''),
     age_group: AGE_GROUPS[0],
+    division: DIVISIONS[0],
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -89,19 +91,35 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
             </select>
           </label>
 
-          <label className="field-label">
-            Age Group
-            <select
-              className="field-input"
-              value={form.age_group}
-              onChange={(e) => set('age_group', e.target.value)}
-              required
-            >
-              {AGE_GROUPS.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-            </select>
-          </label>
+          <div className="field-row">
+            <label className="field-label">
+              Age Group
+              <select
+                className="field-input"
+                value={form.age_group}
+                onChange={(e) => set('age_group', e.target.value)}
+                required
+              >
+                {AGE_GROUPS.map((g) => (
+                  <option key={g} value={g}>{g}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="field-label">
+              Division
+              <select
+                className="field-input"
+                value={form.division}
+                onChange={(e) => set('division', e.target.value)}
+                required
+              >
+                {DIVISIONS.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           {error && <p className="dialog-error">{error}</p>}
 
@@ -213,6 +231,7 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
   const [activeTab, setActiveTab] = useState('players');
   const [editName, setEditName] = useState(initialTeam.name);
   const [editAgeGroup, setEditAgeGroup] = useState(initialTeam.age_group);
+  const [editDivision, setEditDivision] = useState(initialTeam.division ?? DIVISIONS[0]);
   const [savingMeta, setSavingMeta] = useState(false);
   const [metaError, setMetaError] = useState('');
   const [removing, setRemoving] = useState(null);
@@ -225,13 +244,13 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
   }, [initialTeam.id]);
 
   async function saveMeta() {
-    if (editName === team.name && editAgeGroup === team.age_group) return;
+    if (editName === team.name && editAgeGroup === team.age_group && editDivision === (team.division ?? DIVISIONS[0])) return;
     setMetaError('');
     setSavingMeta(true);
     try {
       const updated = await apiFetch(`/api/teams/${team.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ name: editName, age_group: editAgeGroup }),
+        body: JSON.stringify({ name: editName, age_group: editAgeGroup, division: editDivision }),
       });
       setTeam((t) => ({ ...t, ...updated }));
       onUpdated(updated);
@@ -295,6 +314,16 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
             >
               {AGE_GROUPS.map((g) => (
                 <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <select
+              className="field-input manage-division-select"
+              value={editDivision}
+              onChange={(e) => setEditDivision(e.target.value)}
+              onBlur={saveMeta}
+            >
+              {DIVISIONS.map((d) => (
+                <option key={d} value={d}>{d}</option>
               ))}
             </select>
             {savingMeta && <span className="meta-saving">Saving…</span>}
@@ -362,6 +391,7 @@ function TeamCard({ team, onManage }) {
     <div className="team-card">
       <div className="team-card-header">
         <span className="team-age-badge">{team.age_group}</span>
+        {team.division && <span className="team-division-badge">{team.division}</span>}
         <h3 className="team-name">{team.name}</h3>
       </div>
       <div className="team-counts">

@@ -98,6 +98,7 @@ app.post('/', async (c) => {
     name: string;
     season_id: string;
     age_group: string;
+    division?: string;
   }>();
 
   const { name, season_id, age_group } = body;
@@ -111,9 +112,9 @@ app.post('/', async (c) => {
   if (!season) return c.json({ error: 'Season not found' }, 404);
 
   const team = await c.env.DB.prepare(
-    `INSERT INTO teams (name, season_id, age_group) VALUES (?, ?, ?) RETURNING *`
+    `INSERT INTO teams (name, season_id, age_group, division) VALUES (?, ?, ?, ?) RETURNING *`
   )
-    .bind(name, season_id, age_group)
+    .bind(name, season_id, age_group, body.division ?? null)
     .first();
 
   return c.json(team, 201);
@@ -134,6 +135,7 @@ app.put('/:id', async (c) => {
   const body = await c.req.json<{
     name?: string;
     age_group?: string;
+    division?: string | null;
     add_players?: string[];
     remove_players?: string[];
     add_coaches?: string[];
@@ -145,9 +147,10 @@ app.put('/:id', async (c) => {
   const statements: D1PreparedStatement[] = [];
 
   // Basic field updates
-  const fieldUpdates: [string, string][] = [];
+  const fieldUpdates: [string, string | null][] = [];
   if (body.name !== undefined) fieldUpdates.push(['name', body.name]);
   if (body.age_group !== undefined) fieldUpdates.push(['age_group', body.age_group]);
+  if (body.division !== undefined) fieldUpdates.push(['division', body.division ?? null]);
 
   if (fieldUpdates.length > 0) {
     const setClauses = fieldUpdates.map(([k]) => `${k} = ?`).join(', ');
