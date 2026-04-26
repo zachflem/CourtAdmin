@@ -327,6 +327,56 @@
   width: fit-content;
 }
 
+/* ── Staff players ───────────────────────────────────────────────────────── */
+
+.dp-team-player-count {
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.dp-staff-players {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dp-search-input {
+  max-width: 320px;
+}
+
+.dp-players-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.dp-players-table th {
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9ca3af;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.dp-players-table td {
+  padding: 0.6rem 0.75rem;
+  color: #111827;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dp-players-table tr:last-child td { border-bottom: none; }
+.dp-players-table tr:hover td { background: #f9fafb; }
+
+.dp-player-name { font-weight: 600; }
+
+.dp-player-email {
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
 /* ── Role requests ───────────────────────────────────────────────────────── */
 
 .dp-role-section {

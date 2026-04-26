@@ -286,6 +286,116 @@ function MyTeamsTab({ userId }) {
   );
 }
 
+// ─── Staff Teams Tab (coaches / managers) ────────────────────────────────────
+
+function StaffTeamsTab({ userId, staffType, emptyLabel }) {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    apiFetch(`/api/${staffType}/${userId}/teams`)
+      .then(setTeams)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [userId, staffType]);
+
+  if (loading) return <p className="dp-loading">Loading…</p>;
+  if (error) return <p className="dp-error">{error}</p>;
+
+  if (teams.length === 0) {
+    return <p className="dp-empty">You are not assigned to any teams as a {emptyLabel} yet.</p>;
+  }
+
+  return (
+    <div className="dp-teams-grid">
+      {teams.map((team) => (
+        <div key={team.id} className="dp-team-card">
+          <div className="dp-team-name">{team.name}</div>
+          <div className="dp-team-meta">
+            <span className="dp-team-age">{team.age_group}</span>
+            <span className="dp-team-season">{team.season_name}</span>
+          </div>
+          <div className="dp-team-player-count">{team.player_count} player{team.player_count !== 1 ? 's' : ''}</div>
+          {team.season_is_active ? (
+            <span className="dp-active-badge">Active Season</span>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Staff Players Tab (coaches / managers) ───────────────────────────────────
+
+function StaffPlayersTab({ userId, staffType, emptyLabel }) {
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    apiFetch(`/api/${staffType}/${userId}/players`)
+      .then(setPlayers)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [userId, staffType]);
+
+  if (loading) return <p className="dp-loading">Loading…</p>;
+  if (error) return <p className="dp-error">{error}</p>;
+
+  if (players.length === 0) {
+    return <p className="dp-empty">No players found on your {emptyLabel} teams.</p>;
+  }
+
+  const q = search.toLowerCase();
+  const filtered = q
+    ? players.filter((p) =>
+        `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
+        (p.email || '').toLowerCase().includes(q)
+      )
+    : players;
+
+  return (
+    <div className="dp-staff-players">
+      <input
+        className="dp-input dp-search-input"
+        placeholder="Search players…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+      {filtered.length === 0 ? (
+        <p className="dp-empty">No players match your search.</p>
+      ) : (
+        <table className="dp-players-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Age Group</th>
+              <th>#</th>
+              <th>Email</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((p) => (
+              <tr key={p.id}>
+                <td className="dp-player-name">
+                  {p.first_name || p.last_name
+                    ? `${p.first_name || ''} ${p.last_name || ''}`.trim()
+                    : '(no name)'}
+                </td>
+                <td>{p.age_group || '—'}</td>
+                <td>{p.jersey_number != null ? `#${p.jersey_number}` : '—'}</td>
+                <td className="dp-player-email">{p.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 // ─── Role Requests Tab ────────────────────────────────────────────────────────
 
 const STATUS_COLOR = { pending: '#d97706', approved: '#16a34a', rejected: '#dc2626' };
@@ -431,10 +541,20 @@ export function DashboardPage() {
   const { user } = useAuth();
   const roles = parseRoles(user?.roles);
   const isPlayer = roles.includes('player');
+  const isCoach = roles.includes('coach');
+  const isManager = roles.includes('manager');
 
   const tabs = [
     { key: 'profile', label: 'My Profile' },
     ...(isPlayer ? [{ key: 'teams', label: 'My Teams' }] : []),
+    ...(isCoach ? [
+      { key: 'coach-teams', label: 'Teams I Coach' },
+      { key: 'coach-players', label: 'My Players' },
+    ] : []),
+    ...(isManager ? [
+      { key: 'manager-teams', label: 'Teams I Manage' },
+      { key: 'manager-players', label: 'Managed Players' },
+    ] : []),
     { key: 'roles', label: 'Role Requests' },
   ];
 
@@ -461,6 +581,18 @@ export function DashboardPage() {
       <div className="dp-tab-panel">
         {activeTab === 'profile' && <MyProfileTab userId={user.id} />}
         {activeTab === 'teams' && isPlayer && <MyTeamsTab userId={user.id} />}
+        {activeTab === 'coach-teams' && isCoach && (
+          <StaffTeamsTab userId={user.id} staffType="coaches" emptyLabel="coach" />
+        )}
+        {activeTab === 'coach-players' && isCoach && (
+          <StaffPlayersTab userId={user.id} staffType="coaches" emptyLabel="coached" />
+        )}
+        {activeTab === 'manager-teams' && isManager && (
+          <StaffTeamsTab userId={user.id} staffType="managers" emptyLabel="manager" />
+        )}
+        {activeTab === 'manager-players' && isManager && (
+          <StaffPlayersTab userId={user.id} staffType="managers" emptyLabel="managed" />
+        )}
         {activeTab === 'roles' && <RoleRequestsTab user={user} />}
       </div>
     </div>

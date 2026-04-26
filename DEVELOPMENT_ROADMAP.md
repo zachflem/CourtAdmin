@@ -491,9 +491,12 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 11 — Coach & Manager Dashboard
-- [ ] `GET /api/coaches/:id/teams`
-- [ ] `GET /api/coaches/:id/players`
-- [ ] Frontend: Coach My Teams view, Coach My Players view
+- [x] `GET /api/coaches/:id/teams`
+- [x] `GET /api/coaches/:id/players`
+- [x] `GET /api/managers/:id/teams`
+- [x] `GET /api/managers/:id/players`
+- [x] Frontend: Coach My Teams view, Coach My Players view
+- [x] Frontend: Manager My Teams view, Manager My Players view
 
 ---
 

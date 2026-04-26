@@ -74,6 +74,8 @@ Current D1 database ID: `33198368-5fdc-497d-bd78-2c480c08b566`
 - Phase 7 — EOI Processing Workflow
 - Phase 8 — User Management (Admin)
 - Phase 9 — Role Request Workflow
+- Phase 10 — Player & Parent Dashboard
+- Phase 11 — Coach & Manager Dashboard
 
 ### Next phase
-- Phase 10 — Player & Parent Dashboard
+- Phase 12 — Player Feedback System
