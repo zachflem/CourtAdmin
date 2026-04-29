@@ -16,7 +16,7 @@ export function NavBar() {
       <nav className="navbar">
         <div className="navbar-inner">
           <Link to="/" className="navbar-brand">
-            <img src="/logo.png" alt="" className="navbar-app-icon" />
+            <img src={settings.logo_url || '/logo.png'} alt="" className="navbar-app-icon" />
             <span className="navbar-club-name">{settings.club_name || 'CourtAdmin'}</span>
           </Link>
 

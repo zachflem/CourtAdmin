@@ -204,6 +204,7 @@ export function ClubSettingsPage() {
 
           <label className="cs-field-label">
             About Text
+            <span className="cs-field-hint">HTML is supported (e.g. &lt;b&gt;, &lt;a&gt;, &lt;br&gt;)</span>
             <textarea
               className="cs-input cs-textarea"
               rows={5}

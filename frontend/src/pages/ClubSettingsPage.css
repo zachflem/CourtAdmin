@@ -43,6 +43,14 @@
   margin: -0.5rem 0 0;
 }
 
+.cs-field-hint {
+  display: block;
+  font-size: 0.78rem;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-bottom: 0.25rem;
+}
+
 /* ── Form ─────────────────────────────────────────────────────────────────── */
 
 .cs-form {

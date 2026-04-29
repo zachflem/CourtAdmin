@@ -68,7 +68,7 @@ export function HomePage() {
         <div className="section-inner about-inner">
           <div className="about-text">
             <h2 className="section-heading">About us</h2>
-            <p className="about-body">{settings.about_text}</p>
+            <div className="about-body" dangerouslySetInnerHTML={{ __html: settings.about_text }} />
           </div>
 
           {settings.about_image_url && (
