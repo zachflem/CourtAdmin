@@ -603,10 +603,82 @@ function CampaignsTab({ campaigns, templates, users, teams, onRefresh }) {
   );
 }
 
+// ─── Reply Dialog ─────────────────────────────────────────────────────────────
+
+function ReplyDialog({ enquiry, onClose, onReplied }) {
+  const [form, setForm] = useState({
+    subject: `Re: ${enquiry.enquiry_type} enquiry from ${enquiry.name}`,
+    message: '',
+  });
+  const [sending, setSending] = useState(false);
+  const [error,   setError]   = useState('');
+
+  function set(field, value) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSending(true);
+    setError('');
+    try {
+      await apiFetch(`/api/contact-messages/${enquiry.id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify(form),
+      });
+      onReplied(enquiry.id);
+    } catch (err) {
+      setError(err.message);
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="dialog-backdrop" onClick={!sending ? onClose : undefined}>
+      <div className="dialog" onClick={(e) => e.stopPropagation()}>
+        <h2 className="dialog-title">Reply to {enquiry.name}</h2>
+        <p className="reply-to-address">To: {enquiry.email}</p>
+        <form onSubmit={handleSubmit}>
+          <label className="field-label">
+            Subject
+            <input
+              className="field-input"
+              value={form.subject}
+              onChange={(e) => set('subject', e.target.value)}
+              required
+            />
+          </label>
+          <label className="field-label" style={{ marginTop: '1rem' }}>
+            Message
+            <textarea
+              className="field-input field-textarea"
+              value={form.message}
+              onChange={(e) => set('message', e.target.value)}
+              rows={8}
+              placeholder="Write your reply…"
+              required
+              autoFocus
+            />
+          </label>
+          {error && <p className="dialog-error" style={{ marginTop: '0.75rem' }}>{error}</p>}
+          <div className="dialog-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={sending}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={sending}>
+              {sending ? 'Sending…' : 'Send Reply'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ─── Enquiries Tab ────────────────────────────────────────────────────────────
 
-function EnquiriesTab({ enquiries, onMarkRead, onDelete }) {
-  const unread = enquiries.filter((e) => !e.is_read).length;
+function EnquiriesTab({ enquiries, onMarkRead, onDelete, onReplied }) {
+  const [replying, setReplying] = useState(null);
 
   return (
     <div className="tab-panel">
@@ -622,8 +694,14 @@ function EnquiriesTab({ enquiries, onMarkRead, onDelete }) {
                   <span className="enquiry-email">{e.email}</span>
                   <span className="enquiry-type">{e.enquiry_type}</span>
                   <span className="enquiry-date">{formatDate(e.created_at)}</span>
+                  {e.replied_at && (
+                    <span className="enquiry-replied">Replied {formatDate(e.replied_at)}</span>
+                  )}
                 </div>
                 <div className="enquiry-actions">
+                  <button className="btn btn-primary btn-sm" onClick={() => setReplying(e)}>
+                    Reply
+                  </button>
                   {!e.is_read && (
                     <button className="btn btn-ghost btn-sm" onClick={() => onMarkRead(e.id)}>
                       Mark read
@@ -638,6 +716,14 @@ function EnquiriesTab({ enquiries, onMarkRead, onDelete }) {
             </div>
           ))}
         </div>
+      )}
+
+      {replying && (
+        <ReplyDialog
+          enquiry={replying}
+          onClose={() => setReplying(null)}
+          onReplied={(id) => { setReplying(null); onReplied(id); }}
+        />
       )}
     </div>
   );
@@ -692,6 +778,13 @@ export function EmailPage() {
     setEnquiries((prev) => prev.filter((e) => e.id !== id));
   }
 
+  function handleReplied(id) {
+    const now = new Date().toISOString();
+    setEnquiries((prev) =>
+      prev.map((e) => e.id === id ? { ...e, is_read: 1, replied_at: now } : e)
+    );
+  }
+
   if (!canAccess) {
     return (
       <div className="page-container">
@@ -737,6 +830,7 @@ export function EmailPage() {
               enquiries={enquiries}
               onMarkRead={handleMarkRead}
               onDelete={handleDelete}
+              onReplied={handleReplied}
             />
           )}
           {activeTab === 'campaigns' && (

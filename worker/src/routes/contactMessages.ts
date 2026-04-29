@@ -104,4 +104,61 @@ app.delete('/api/contact-messages/:id', async (c) => {
   return c.json({ ok: true });
 });
 
+app.post('/api/contact-messages/:id/reply', async (c) => {
+  const denied = requireRole(c, ['admin', 'committee']);
+  if (denied) return denied;
+
+  const body = await c.req.json<{ subject?: string; message?: string }>();
+  const { subject, message } = body;
+  if (!subject?.trim() || !message?.trim()) {
+    return c.json({ error: 'subject and message are required' }, 400);
+  }
+
+  const msg = await c.env.DB.prepare(
+    'SELECT id, name, email FROM contact_messages WHERE id = ?'
+  ).bind(c.req.param('id')).first<{ id: string; name: string; email: string }>();
+
+  if (!msg) return c.json({ error: 'Message not found' }, 404);
+
+  if (!c.env.RESEND_API_KEY) {
+    return c.json({ error: 'Email is not configured (missing RESEND_API_KEY)' }, 503);
+  }
+
+  const settings = await c.env.DB.prepare(
+    'SELECT club_name, contact_email FROM club_settings LIMIT 1'
+  ).first<{ club_name: string; contact_email: string | null }>();
+
+  const from = c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const clubName = settings?.club_name || 'Your Club';
+
+  const emailRes = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${c.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from,
+      to: [msg.email],
+      reply_to: settings?.contact_email || from,
+      subject: subject.trim(),
+      html: `<p>Hi ${msg.name},</p>
+${message.trim().split('\n').map((line) => `<p>${line}</p>`).join('\n')}
+<p style="margin-top:2rem;font-size:0.85em;color:#6b7280;">— ${clubName}</p>`,
+    }),
+  });
+
+  if (!emailRes.ok) {
+    const detail = await emailRes.text().catch(() => '');
+    return c.json({ error: `Failed to send email: ${detail}` }, 502);
+  }
+
+  const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  await c.env.DB.prepare(
+    'UPDATE contact_messages SET is_read = 1, replied_at = ? WHERE id = ?'
+  ).bind(now, msg.id).run();
+
+  return c.json({ ok: true });
+});
+
 export default app;
