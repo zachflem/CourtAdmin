@@ -8,6 +8,7 @@ import { SeasonsPage } from './pages/SeasonsPage';
 import { TeamsPage } from './pages/TeamsPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { EmailPage } from './pages/EmailPage';
 
 function LoginPage() {
   return (
@@ -65,6 +66,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <PlayersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/email"
+          element={
+            <ProtectedRoute>
+              <EmailPage />
             </ProtectedRoute>
           }
         />

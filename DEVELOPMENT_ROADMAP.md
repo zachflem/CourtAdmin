@@ -511,10 +511,10 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 13 — Email Campaigns
-- [ ] `GET/POST/PUT/DELETE /api/email-templates`
-- [ ] `GET/POST /api/email-campaigns`
-- [ ] Campaign send: query recipients by role or ID list, batch via Resend
-- [ ] Frontend: Email Composer tab (template picker, recipient selector, compose, send)
+- [x] `GET/POST/PUT/DELETE /api/email-templates`
+- [x] `GET/POST /api/email-campaigns`
+- [x] Campaign send: query recipients by role or ID list, batch via Resend
+- [x] Frontend: Email Composer tab (template picker, recipient selector, compose, send)
 
 ---
 
