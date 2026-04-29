@@ -643,10 +643,11 @@ function ThreadDialog({ enquiry, onClose }) {
 
 // ─── Reply Dialog ─────────────────────────────────────────────────────────────
 
-function ReplyDialog({ enquiry, onClose, onReplied }) {
+function ReplyDialog({ enquiry, replierName, onClose, onReplied }) {
   const [form, setForm] = useState({
-    subject: `Re: ${enquiry.enquiry_type} enquiry from ${enquiry.name}`,
-    message: '',
+    subject:      `Re: ${enquiry.enquiry_type} enquiry from ${enquiry.name}`,
+    message:      '',
+    include_name: true,
   });
   const [sending, setSending] = useState(false);
   const [error,   setError]   = useState('');
@@ -698,6 +699,19 @@ function ReplyDialog({ enquiry, onClose, onReplied }) {
               autoFocus
             />
           </label>
+          <label className="reply-include-name-label">
+            <input
+              type="checkbox"
+              checked={form.include_name}
+              onChange={(e) => set('include_name', e.target.checked)}
+            />
+            Include my name in the sign-off
+            {replierName && (
+              <span className="reply-include-name-preview">
+                {form.include_name ? `(signed as "${replierName}")` : '(club name only)'}
+              </span>
+            )}
+          </label>
           {error && <p className="dialog-error" style={{ marginTop: '0.75rem' }}>{error}</p>}
           <div className="dialog-actions">
             <button type="button" className="btn btn-ghost" onClick={onClose} disabled={sending}>
@@ -715,7 +729,7 @@ function ReplyDialog({ enquiry, onClose, onReplied }) {
 
 // ─── Enquiries Tab ────────────────────────────────────────────────────────────
 
-function EnquiriesTab({ enquiries, onMarkRead, onDelete, onReplied }) {
+function EnquiriesTab({ enquiries, replierName, onMarkRead, onDelete, onReplied }) {
   const [replying,  setReplying]  = useState(null);
   const [viewThread, setViewThread] = useState(null);
 
@@ -766,6 +780,7 @@ function EnquiriesTab({ enquiries, onMarkRead, onDelete, onReplied }) {
       {replying && (
         <ReplyDialog
           enquiry={replying}
+          replierName={replierName}
           onClose={() => setReplying(null)}
           onReplied={(id, replyData) => { setReplying(null); onReplied(id, replyData); }}
         />
@@ -892,6 +907,7 @@ export function EmailPage() {
           {activeTab === 'enquiries' && (
             <EnquiriesTab
               enquiries={enquiries}
+              replierName={`${user?.first_name || ''} ${user?.last_name || ''}`.trim()}
               onMarkRead={handleMarkRead}
               onDelete={handleDelete}
               onReplied={handleReplied}

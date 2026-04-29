@@ -113,8 +113,8 @@ app.post('/api/contact-messages/:id/reply', async (c) => {
   const denied = requireRole(c, ['admin', 'committee']);
   if (denied) return denied;
 
-  const body = await c.req.json<{ subject?: string; message?: string }>();
-  const { subject, message } = body;
+  const body = await c.req.json<{ subject?: string; message?: string; include_name?: boolean }>();
+  const { subject, message, include_name = true } = body;
   if (!subject?.trim() || !message?.trim()) {
     return c.json({ error: 'subject and message are required' }, 400);
   }
@@ -149,7 +149,7 @@ app.post('/api/contact-messages/:id/reply', async (c) => {
       subject: subject.trim(),
       html: `<p>Hi ${msg.name},</p>
 ${message.trim().split('\n').map((line) => `<p>${line}</p>`).join('\n')}
-<p style="margin-top:2rem;font-size:0.85em;color:#6b7280;">— ${clubName}</p>`,
+<p style="margin-top:2rem;font-size:0.85em;color:#6b7280;">— ${signOff}</p>`,
     }),
   });
 
@@ -159,6 +159,10 @@ ${message.trim().split('\n').map((line) => `<p>${line}</p>`).join('\n')}
   }
 
   const replier = c.get('user');
+  const replierName = [replier.first_name, replier.last_name].filter(Boolean).join(' ');
+  const signOff = include_name && replierName
+    ? `${replierName}, ${clubName}`
+    : clubName;
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
   await c.env.DB.prepare(
     `UPDATE contact_messages
