@@ -603,6 +603,44 @@ function CampaignsTab({ campaigns, templates, users, teams, onRefresh }) {
   );
 }
 
+// ─── Thread Dialog (view original + reply) ───────────────────────────────────
+
+function ThreadDialog({ enquiry, onClose }) {
+  return (
+    <div className="dialog-backdrop" onClick={onClose}>
+      <div className="dialog dialog--wide" onClick={(e) => e.stopPropagation()}>
+        <h2 className="dialog-title">Conversation thread</h2>
+
+        <div className="thread-message thread-message--inbound">
+          <div className="thread-message-header">
+            <span className="thread-message-author">{enquiry.name}</span>
+            <span className="thread-message-email">{enquiry.email}</span>
+            <span className="thread-message-date">{formatDate(enquiry.created_at)}</span>
+          </div>
+          <p className="thread-message-body">{enquiry.message}</p>
+        </div>
+
+        <div className="thread-divider">↓ Reply sent</div>
+
+        <div className="thread-message thread-message--outbound">
+          <div className="thread-message-header">
+            <span className="thread-message-author">
+              {enquiry.replied_by_first_name} {enquiry.replied_by_last_name}
+            </span>
+            <span className="thread-message-date">{formatDate(enquiry.replied_at)}</span>
+          </div>
+          <p className="thread-subject">Subject: {enquiry.reply_subject}</p>
+          <p className="thread-message-body">{enquiry.reply_message}</p>
+        </div>
+
+        <div className="dialog-actions">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Reply Dialog ─────────────────────────────────────────────────────────────
 
 function ReplyDialog({ enquiry, onClose, onReplied }) {
@@ -626,7 +664,7 @@ function ReplyDialog({ enquiry, onClose, onReplied }) {
         method: 'POST',
         body: JSON.stringify(form),
       });
-      onReplied(enquiry.id);
+      onReplied(enquiry.id, form);
     } catch (err) {
       setError(err.message);
       setSending(false);
@@ -678,7 +716,8 @@ function ReplyDialog({ enquiry, onClose, onReplied }) {
 // ─── Enquiries Tab ────────────────────────────────────────────────────────────
 
 function EnquiriesTab({ enquiries, onMarkRead, onDelete, onReplied }) {
-  const [replying, setReplying] = useState(null);
+  const [replying,  setReplying]  = useState(null);
+  const [viewThread, setViewThread] = useState(null);
 
   return (
     <div className="tab-panel">
@@ -695,7 +734,13 @@ function EnquiriesTab({ enquiries, onMarkRead, onDelete, onReplied }) {
                   <span className="enquiry-type">{e.enquiry_type}</span>
                   <span className="enquiry-date">{formatDate(e.created_at)}</span>
                   {e.replied_at && (
-                    <span className="enquiry-replied">Replied {formatDate(e.replied_at)}</span>
+                    <button
+                      className="enquiry-replied"
+                      onClick={() => setViewThread(e)}
+                      title="View reply"
+                    >
+                      Replied {formatDate(e.replied_at)}
+                    </button>
                   )}
                 </div>
                 <div className="enquiry-actions">
@@ -722,7 +767,14 @@ function EnquiriesTab({ enquiries, onMarkRead, onDelete, onReplied }) {
         <ReplyDialog
           enquiry={replying}
           onClose={() => setReplying(null)}
-          onReplied={(id) => { setReplying(null); onReplied(id); }}
+          onReplied={(id, replyData) => { setReplying(null); onReplied(id, replyData); }}
+        />
+      )}
+
+      {viewThread && (
+        <ThreadDialog
+          enquiry={viewThread}
+          onClose={() => setViewThread(null)}
         />
       )}
     </div>
@@ -778,10 +830,22 @@ export function EmailPage() {
     setEnquiries((prev) => prev.filter((e) => e.id !== id));
   }
 
-  function handleReplied(id) {
+  function handleReplied(id, replyData) {
     const now = new Date().toISOString();
     setEnquiries((prev) =>
-      prev.map((e) => e.id === id ? { ...e, is_read: 1, replied_at: now } : e)
+      prev.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              is_read: 1,
+              replied_at: now,
+              reply_subject: replyData.subject,
+              reply_message: replyData.message,
+              replied_by_first_name: user?.first_name || '',
+              replied_by_last_name:  user?.last_name  || '',
+            }
+          : e
+      )
     );
   }
 

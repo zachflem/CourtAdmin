@@ -75,9 +75,14 @@ app.get('/api/contact-messages', async (c) => {
   const denied = requireRole(c, ['admin', 'committee']);
   if (denied) return denied;
 
-  const rows = await c.env.DB.prepare(
-    'SELECT * FROM contact_messages ORDER BY created_at DESC'
-  ).all<Record<string, unknown>>();
+  const rows = await c.env.DB.prepare(`
+    SELECT cm.*,
+           u.first_name AS replied_by_first_name,
+           u.last_name  AS replied_by_last_name
+    FROM   contact_messages cm
+    LEFT JOIN users u ON cm.replied_by_user_id = u.id
+    ORDER BY cm.created_at DESC
+  `).all<Record<string, unknown>>();
 
   return c.json(rows.results);
 });
@@ -153,10 +158,13 @@ ${message.trim().split('\n').map((line) => `<p>${line}</p>`).join('\n')}
     return c.json({ error: `Failed to send email: ${detail}` }, 502);
   }
 
+  const replier = c.get('user');
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
   await c.env.DB.prepare(
-    'UPDATE contact_messages SET is_read = 1, replied_at = ? WHERE id = ?'
-  ).bind(now, msg.id).run();
+    `UPDATE contact_messages
+     SET is_read = 1, replied_at = ?, reply_subject = ?, reply_message = ?, replied_by_user_id = ?
+     WHERE id = ?`
+  ).bind(now, subject.trim(), message.trim(), replier.id, msg.id).run();
 
   return c.json({ ok: true });
 });
