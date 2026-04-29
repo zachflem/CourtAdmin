@@ -47,7 +47,7 @@ async function sendEmail(
   subject: string,
   html: string,
 ): Promise<void> {
-  const from = env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const from = env.RESEND_FROM_EMAIL || 'email@courtadmin.seezed.net';
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {

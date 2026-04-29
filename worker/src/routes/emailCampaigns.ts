@@ -219,7 +219,7 @@ emailCampaignsRouter.post('/', async (c) => {
   ).run();
 
   // Batch send via Resend
-  const from = c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const from = c.env.RESEND_FROM_EMAIL || 'email@courtadmin.seezed.net';
   let sentCount = 0;
   let failedCount = 0;
 

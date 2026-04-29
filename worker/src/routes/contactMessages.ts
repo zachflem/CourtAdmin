@@ -43,7 +43,7 @@ app.post('/api/contact', async (c) => {
   }
 
   if (forwardTo && c.env.RESEND_API_KEY) {
-    const from = c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const from = c.env.RESEND_FROM_EMAIL || 'email@courtadmin.seezed.net';
     const clubName = settings?.club_name || 'Your Club';
     await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -133,7 +133,7 @@ app.post('/api/contact-messages/:id/reply', async (c) => {
     'SELECT club_name, contact_email FROM club_settings LIMIT 1'
   ).first<{ club_name: string; contact_email: string | null }>();
 
-  const from = c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const from = c.env.RESEND_FROM_EMAIL || 'email@courtadmin.seezed.net';
   const clubName = settings?.club_name || 'Your Club';
 
   const emailRes = await fetch('https://api.resend.com/emails', {
