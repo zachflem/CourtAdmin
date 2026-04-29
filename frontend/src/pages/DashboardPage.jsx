@@ -29,6 +29,13 @@ function formatDate(iso) {
   });
 }
 
+function formatTime12(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hour = parseInt(h, 10);
+  return `${hour % 12 || 12}:${m}${hour >= 12 ? 'pm' : 'am'}`;
+}
+
 function RoleBadge({ role }) {
   return <span className={`role-badge role-badge--${role}`}>{role}</span>;
 }
@@ -320,6 +327,22 @@ function StaffTeamsTab({ userId, staffType, emptyLabel }) {
           {team.season_is_active ? (
             <span className="dp-active-badge">Active Season</span>
           ) : null}
+          {team.training && team.training.length > 0 && (
+            <div className="dp-team-training">
+              <div className="dp-training-label">Training</div>
+              <div className="dp-training-venue">{team.training[0].venue_name}</div>
+              {team.training[0].venue_address && (
+                <div className="dp-training-address">{team.training[0].venue_address}</div>
+              )}
+              <div className="dp-training-slots">
+                {team.training.map((s, i) => (
+                  <span key={i} className="dp-training-slot">
+                    {s.day_of_week} {formatTime12(s.start_time)}–{formatTime12(s.end_time)}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>

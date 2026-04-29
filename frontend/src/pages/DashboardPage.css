@@ -579,3 +579,48 @@
   display: flex;
   gap: 0.75rem;
 }
+
+/* ── Team Training Venue ─────────────────────────────────────────────────── */
+
+.dp-team-training {
+  margin-top: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dp-training-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #9ca3af;
+  margin-bottom: 0.2rem;
+}
+
+.dp-training-venue {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.dp-training-address {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-bottom: 0.3rem;
+}
+
+.dp-training-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+}
+
+.dp-training-slot {
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--color-primary-light, #dbeafe);
+  color: var(--color-primary, #1e40af);
+}

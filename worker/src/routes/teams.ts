@@ -49,9 +49,9 @@ app.get('/by-age-group/:age_group', async (c) => {
   return c.json(results);
 });
 
-// GET /api/teams/:id — team with full member lists
+// GET /api/teams/:id — team with full member lists and training venue info
 app.get('/:id', async (c) => {
-  const denied = requireRole(c, ['admin', 'committee']);
+  const denied = requireRole(c, ['admin', 'committee', 'coach', 'manager']);
   if (denied) return denied;
 
   const { id } = c.req.param();
@@ -63,7 +63,7 @@ app.get('/:id', async (c) => {
 
   if (!team) return c.json({ error: 'Team not found' }, 404);
 
-  const [players, coaches, managers] = await c.env.DB.batch([
+  const [players, coaches, managers, training] = await c.env.DB.batch([
     c.env.DB.prepare(
       `SELECT u.id, u.first_name, u.last_name, u.email, u.jersey_number, u.age_group
        FROM users u JOIN team_players tp ON tp.user_id = u.id
@@ -79,6 +79,18 @@ app.get('/:id', async (c) => {
        FROM users u JOIN team_managers tm ON tm.user_id = u.id
        WHERE tm.team_id = ? ORDER BY u.last_name, u.first_name`
     ).bind(id),
+    c.env.DB.prepare(
+      `SELECT vt.id AS timeslot_id, vt.day_of_week, vt.start_time, vt.end_time,
+              v.id AS venue_id, v.name AS venue_name, v.address AS venue_address
+       FROM team_timeslot_assignments tta
+       JOIN venue_timeslots vt ON vt.id = tta.timeslot_id
+       JOIN venues v ON v.id = vt.venue_id
+       WHERE tta.team_id = ?
+       ORDER BY CASE vt.day_of_week
+         WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+         WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
+         WHEN 'Sunday' THEN 7 ELSE 8 END, vt.start_time`
+    ).bind(id),
   ]);
 
   return c.json({
@@ -86,6 +98,7 @@ app.get('/:id', async (c) => {
     players: players?.results ?? [],
     coaches: coaches?.results ?? [],
     managers: managers?.results ?? [],
+    training: training?.results ?? [],
   });
 });
 
@@ -142,6 +155,8 @@ app.put('/:id', async (c) => {
     remove_coaches?: string[];
     add_managers?: string[];
     remove_managers?: string[];
+    add_timeslots?: string[];
+    remove_timeslots?: string[];
   }>();
 
   const statements: D1PreparedStatement[] = [];
@@ -161,7 +176,7 @@ app.put('/:id', async (c) => {
     );
   }
 
-  // Junction table operations
+  // Junction table operations for members
   const ops: { action: 'add' | 'remove'; table: string; ids: string[] }[] = [
     { action: 'add',    table: 'team_players',  ids: body.add_players    ?? [] },
     { action: 'remove', table: 'team_players',  ids: body.remove_players ?? [] },
@@ -187,6 +202,22 @@ app.put('/:id', async (c) => {
         );
       }
     }
+  }
+
+  // Timeslot assignment operations
+  for (const timeslotId of body.add_timeslots ?? []) {
+    statements.push(
+      c.env.DB.prepare(
+        `INSERT OR IGNORE INTO team_timeslot_assignments (team_id, timeslot_id) VALUES (?, ?)`
+      ).bind(id, timeslotId)
+    );
+  }
+  for (const timeslotId of body.remove_timeslots ?? []) {
+    statements.push(
+      c.env.DB.prepare(
+        `DELETE FROM team_timeslot_assignments WHERE team_id = ? AND timeslot_id = ?`
+      ).bind(id, timeslotId)
+    );
   }
 
   if (statements.length > 0) {

@@ -538,9 +538,59 @@ Key differences from the original MongoDB design:
 
 ---
 
+### Phase 16 — Venue Management
+- [ ] Migration `0010_venues.sql` — `venues`, `venue_timeslots`, `venue_access`, `venue_documents`, `team_timeslot_assignments` tables
+- [ ] `GET /api/venues` (admin / committee / coach / manager — returns venues with timeslots + counts)
+- [ ] `GET /api/venues/:id` (admin / committee — full detail with timeslots + assigned teams, access, documents)
+- [ ] `POST /api/venues` (admin / committee)
+- [ ] `PUT /api/venues/:id` (admin / committee)
+- [ ] `DELETE /api/venues/:id` (admin / committee — cascades R2 doc cleanup)
+- [ ] `POST /api/venues/:id/timeslots` — add a weekly timeslot
+- [ ] `DELETE /api/venues/:id/timeslots/:timeslotId`
+- [ ] `POST /api/venues/:id/access` — grant user access (key / card / code / other)
+- [ ] `DELETE /api/venues/:id/access/:userId`
+- [ ] `POST /api/venues/:id/documents` — upload doc to R2 (`venue-docs/{venueId}/…`)
+- [ ] `DELETE /api/venues/:id/documents/:docId`
+- [ ] `PUT /api/teams/:id` extended — `add_timeslots` / `remove_timeslots` arrays
+- [ ] `GET /api/coaches/:id/teams` + `GET /api/managers/:id/teams` — include `training` array
+- [ ] `/uploads/venue-docs/:venueId/:filename` serving route (3-level R2 path)
+- [ ] Frontend: `/venues` page — venue cards grid, Create Venue dialog, Manage dialog (5 tabs: Details, Timeslots, Access, Documents, Assigned Teams)
+- [ ] Timeslots tab — team assignment UI (assign / unassign team per slot)
+- [ ] Coach / manager: Venues link in NavBar; read-only venue list on `/venues`
+- [ ] Coach / manager dashboard — training venue section on each team card (venue name, address, schedule chips)
+
+---
+
 ### Bugs & Fixes
 - [x] rename frontend app - match 'Club Name', defaults to 'CourtAdmin' if the name isn't set.
 - [x] about and contact are homepage sections (id="about" / id="contact"); navbar links to anchors; content managed via existing Club Settings fields.
 - [x] contact form on homepage: name, email, enquiry type, message; stores to contact_messages table; forwards copy via Resend to per-type email (fallback: club contact_email); admin/committee inbox on Messages page; enquiry types configurable in Club Settings.
 - [x] homepage restructured: Features section removed; About and Contact are now separate sections; /platform page added (sells CourtAdmin platform, uses club colour scheme + logo.png, linked from footer as "Powered by CourtAdmin").
 - [x] add new icon.  favicon.png + logo.png placed in frontend/public/; favicon wired in index.html; logo shown in navbar; document.title updates from club_name via ClubContext.
+- [ ] investigate any way to speed up the loading process?  there is a flash of the default colours that pops up as the page loads
+- [ ] investigate adding an instagram carousel to the homepage.  set the url and grab the last N posts
+
+---
+
+### Venue Management
+The purpose of venue management is to allow the club to keep track of 3rd party venues for training and other events.  
+For the venue itself, we need to track the Contact Info, Availability (what times the club has the venue booked), Access Instructions, Who has access (which coaches/comittee have keys/cards for the venue), the cost of each session (per/hour), any documentation required by the venue (doc upload)
+
+For each team, we need to assign them a training location based on the available venues and timeslots and visualise this on a /venues page.  Coaches and Managers should see their venue info when they view their assigned teams on the /teams page.
+
+**D1 tables:** `venues`, `venue_timeslots`, `venue_access`, `venue_documents`, `team_timeslot_assignments`
+
+**Endpoints (admin / committee):** Full CRUD on venues, timeslots, access holders, and documents.
+
+**Endpoints (coach / manager):** `GET /api/venues` (read-only list with timeslots).
+
+**Assign teams to timeslots:** via `PUT /api/teams/:id` with `add_timeslots` / `remove_timeslots` arrays.
+
+**R2:** venue docs stored at `venue-docs/{venue_id}/{filename}`, served via `/uploads/venue-docs/:venueId/:filename`.
+
+---
+
+### Sponsor Management
+The purpose of sponsor management is to collate info about sponsors, ensure we have a media pack available (various image sizes[small], [medium], [large]) and all the relevant info about the sponsor.
+
+We should have a /sponsors page where all this is entered, and we should also use this info to highlight sponsors on the homepage (enabled by a checkbox on the sponsor listing) The frequency display would be dictated by the level of sponsorship purchased by the sponsor.  Let's work on a Gold, Silver, Bronze tier system, with a General level below that (4 tiers total).  Gold sponsors get a permanant card on the homepage, with silver and bronze getting rotated.

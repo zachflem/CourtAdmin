@@ -17,6 +17,29 @@ const TEAM_FIELDS = `
   (SELECT COUNT(*) FROM team_players WHERE team_id = t.id) AS player_count
 `;
 
+async function attachTraining(db: D1Database, teams: { id: string }[]): Promise<unknown[]> {
+  if (teams.length === 0) return teams;
+  const { results: slots } = await db.prepare(
+    `SELECT tta.team_id, vt.day_of_week, vt.start_time, vt.end_time,
+            v.name AS venue_name, v.address AS venue_address
+     FROM team_timeslot_assignments tta
+     JOIN venue_timeslots vt ON vt.id = tta.timeslot_id
+     JOIN venues v ON v.id = vt.venue_id
+     WHERE tta.team_id IN (${teams.map(() => '?').join(',')})
+     ORDER BY CASE vt.day_of_week
+       WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+       WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
+       WHEN 'Sunday' THEN 7 ELSE 8 END, vt.start_time`
+  ).bind(...teams.map((t) => t.id)).all() as { results: { team_id: string }[] };
+
+  const byTeam = new Map<string, unknown[]>();
+  for (const slot of slots) {
+    if (!byTeam.has(slot.team_id)) byTeam.set(slot.team_id, []);
+    byTeam.get(slot.team_id)!.push(slot);
+  }
+  return teams.map((t) => ({ ...t, training: byTeam.get(t.id) ?? [] }));
+}
+
 // ── Coaches ───────────────────────────────────────────────────────────────────
 
 export const coachesRouter = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
@@ -29,16 +52,16 @@ coachesRouter.get('/:id/teams', async (c) => {
   const id = c.req.param('id');
   if (!canViewStaffData(caller, id)) return c.json({ error: 'Forbidden' }, 403);
 
-  const { results } = await c.env.DB.prepare(`
+  const { results: teams } = await c.env.DB.prepare(`
     SELECT ${TEAM_FIELDS}
     FROM team_coaches tc
     JOIN teams t ON tc.team_id = t.id
     JOIN seasons s ON t.season_id = s.id
     WHERE tc.user_id = ?
     ORDER BY s.is_active DESC, s.start_date DESC, t.name
-  `).bind(id).all();
+  `).bind(id).all() as { results: { id: string }[] };
 
-  return c.json(results);
+  return c.json(await attachTraining(c.env.DB, teams));
 });
 
 // GET /api/coaches/:id/players — unique players across all teams the coach coaches
@@ -71,16 +94,16 @@ managersRouter.get('/:id/teams', async (c) => {
   const id = c.req.param('id');
   if (!canViewStaffData(caller, id)) return c.json({ error: 'Forbidden' }, 403);
 
-  const { results } = await c.env.DB.prepare(`
+  const { results: teams } = await c.env.DB.prepare(`
     SELECT ${TEAM_FIELDS}
     FROM team_managers tm
     JOIN teams t ON tm.team_id = t.id
     JOIN seasons s ON t.season_id = s.id
     WHERE tm.user_id = ?
     ORDER BY s.is_active DESC, s.start_date DESC, t.name
-  `).bind(id).all();
+  `).bind(id).all() as { results: { id: string }[] };
 
-  return c.json(results);
+  return c.json(await attachTraining(c.env.DB, teams));
 });
 
 // GET /api/managers/:id/players — unique players across all teams the manager manages

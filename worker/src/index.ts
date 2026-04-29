@@ -16,6 +16,7 @@ import { coachesRouter, managersRouter, parentsRouter } from './routes/coaches';
 import feedbackRoutes from './routes/feedback';
 import { emailTemplatesRouter, emailCampaignsRouter } from './routes/emailCampaigns';
 import contactMessagesRoutes from './routes/contactMessages';
+import venuesRoutes from './routes/venues';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -47,6 +48,18 @@ app.route('/api/role-requests', roleRequestsRoutes);
 app.route('/api/email-templates', emailTemplatesRouter);
 app.route('/api/email-campaigns', emailCampaignsRouter);
 app.route('/', contactMessagesRoutes);
+app.route('/api/venues', venuesRoutes);
+
+// Serve venue documents (3-level path — must come before the 2-level route below)
+app.get('/uploads/venue-docs/:venueId/:filename', async (c) => {
+  const key = `venue-docs/${c.req.param('venueId')}/${c.req.param('filename')}`;
+  const obj = await c.env.UPLOADS.get(key);
+  if (!obj) return c.json({ error: 'Not found' }, 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('etag', obj.httpEtag);
+  return new Response(obj.body, { headers });
+});
 
 // Serve R2 uploads — must come before the Assets fallback
 app.get('/uploads/:category/:filename', async (c) => {
