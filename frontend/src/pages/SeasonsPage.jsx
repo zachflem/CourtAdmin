@@ -9,6 +9,8 @@ const EMPTY_FORM = {
   start_date: '',
   end_date: '',
   age_cutoff_date: '',
+  eoi_start_date: '',
+  eoi_end_date: '',
 };
 
 function formatDate(iso) {
@@ -25,6 +27,8 @@ function SeasonDialog({ season, onClose, onSaved }) {
           start_date: season.start_date.slice(0, 10),
           end_date: season.end_date.slice(0, 10),
           age_cutoff_date: season.age_cutoff_date.slice(0, 10),
+          eoi_start_date: season.eoi_start_date ? season.eoi_start_date.slice(0, 10) : '',
+          eoi_end_date: season.eoi_end_date ? season.eoi_end_date.slice(0, 10) : '',
         }
       : EMPTY_FORM
   );
@@ -44,11 +48,16 @@ function SeasonDialog({ season, onClose, onSaved }) {
         ? `${API_BASE}/api/seasons/${season.id}`
         : `${API_BASE}/api/seasons`;
       const method = isEdit ? 'PUT' : 'POST';
+      const payload = {
+        ...form,
+        eoi_start_date: form.eoi_start_date || null,
+        eoi_end_date: form.eoi_end_date || null,
+      };
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -114,6 +123,29 @@ function SeasonDialog({ season, onClose, onSaved }) {
               placeholder="Defaults to Jan 1 of start year"
             />
           </label>
+
+          <div className="field-row">
+            <label className="field-label">
+              EOI Open Date
+              <span className="field-hint">When registrations open (optional)</span>
+              <input
+                className="field-input"
+                type="date"
+                value={form.eoi_start_date}
+                onChange={(e) => set('eoi_start_date', e.target.value)}
+              />
+            </label>
+            <label className="field-label">
+              EOI Close Date
+              <span className="field-hint">When registrations close (optional)</span>
+              <input
+                className="field-input"
+                type="date"
+                value={form.eoi_end_date}
+                onChange={(e) => set('eoi_end_date', e.target.value)}
+              />
+            </label>
+          </div>
 
           {error && <p className="dialog-error">{error}</p>}
 
@@ -235,6 +267,8 @@ export function SeasonsPage() {
                 <th>Start</th>
                 <th>End</th>
                 <th>Age Cutoff</th>
+                <th>EOI Open</th>
+                <th>EOI Close</th>
                 <th>Active</th>
                 <th>Open</th>
                 <th></th>
@@ -247,6 +281,8 @@ export function SeasonsPage() {
                   <td>{formatDate(s.start_date)}</td>
                   <td>{formatDate(s.end_date)}</td>
                   <td>{formatDate(s.age_cutoff_date)}</td>
+                  <td>{formatDate(s.eoi_start_date)}</td>
+                  <td>{formatDate(s.eoi_end_date)}</td>
                   <td>
                     <ToggleButton
                       label={s.is_active ? 'Active' : 'Inactive'}

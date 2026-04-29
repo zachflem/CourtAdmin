@@ -6,11 +6,17 @@ import { requireRole } from '../middleware/requireRole';
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
 // Public — open + active seasons for EOI dropdown
+// If eoi_start_date/eoi_end_date are set, only return the season when today falls within that window.
 app.get('/available', async (c) => {
   const { results } = await c.env.DB.prepare(
-    `SELECT id, name, start_date, end_date, age_cutoff_date
+    `SELECT id, name, start_date, end_date, age_cutoff_date, eoi_start_date, eoi_end_date
      FROM seasons
-     WHERE is_active = 1 AND is_closed = 0
+     WHERE is_active = 1
+       AND is_closed = 0
+       AND (
+         eoi_start_date IS NULL
+         OR (date('now') >= eoi_start_date AND date('now') <= eoi_end_date)
+       )
      ORDER BY start_date DESC`
   ).all();
   return c.json(results);
@@ -38,6 +44,8 @@ app.post('/', async (c) => {
     start_date: string;
     end_date: string;
     age_cutoff_date?: string;
+    eoi_start_date?: string;
+    eoi_end_date?: string;
   }>();
 
   const { name, start_date, end_date } = body;
@@ -49,12 +57,15 @@ app.post('/', async (c) => {
   const age_cutoff_date =
     body.age_cutoff_date || `${new Date(start_date).getUTCFullYear()}-01-01`;
 
+  const eoi_start_date = body.eoi_start_date || null;
+  const eoi_end_date = body.eoi_end_date || null;
+
   const result = await c.env.DB.prepare(
-    `INSERT INTO seasons (name, start_date, end_date, age_cutoff_date)
-     VALUES (?, ?, ?, ?)
+    `INSERT INTO seasons (name, start_date, end_date, age_cutoff_date, eoi_start_date, eoi_end_date)
+     VALUES (?, ?, ?, ?, ?, ?)
      RETURNING *`
   )
-    .bind(name, start_date, end_date, age_cutoff_date)
+    .bind(name, start_date, end_date, age_cutoff_date, eoi_start_date, eoi_end_date)
     .first();
 
   return c.json(result, 201);
@@ -78,11 +89,13 @@ app.put('/:id', async (c) => {
     start_date?: string;
     end_date?: string;
     age_cutoff_date?: string;
+    eoi_start_date?: string | null;
+    eoi_end_date?: string | null;
     is_active?: boolean;
     is_closed?: boolean;
   }>();
 
-  const ALLOWED = ['name', 'start_date', 'end_date', 'age_cutoff_date', 'is_active', 'is_closed'] as const;
+  const ALLOWED = ['name', 'start_date', 'end_date', 'age_cutoff_date', 'eoi_start_date', 'eoi_end_date', 'is_active', 'is_closed'] as const;
   type AllowedKey = typeof ALLOWED[number];
 
   const entries = (Object.entries(body) as [AllowedKey, unknown][]).filter(
