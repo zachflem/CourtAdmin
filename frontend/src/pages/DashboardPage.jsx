@@ -265,7 +265,7 @@ function MyTeamsTab({ userId }) {
   if (error) return <p className="dp-error">{error}</p>;
 
   if (teams.length === 0) {
-    return <p className="dp-empty">You are not assigned to any teams yet.</p>;
+    return <p className="dp-empty">You haven't been added to any teams yet. A club admin can assign you to a team from the Teams management page.</p>;
   }
 
   return (

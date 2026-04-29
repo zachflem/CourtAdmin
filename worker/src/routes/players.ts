@@ -129,7 +129,7 @@ app.get('/:id/teams', async (c) => {
     FROM team_players tp
     JOIN teams t ON tp.team_id = t.id
     JOIN seasons s ON t.season_id = s.id
-    WHERE tp.player_id = ?
+    WHERE tp.user_id = ?
     ORDER BY s.is_active DESC, s.start_date DESC, t.name
   `).bind(id).all();
 
