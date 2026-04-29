@@ -761,6 +761,8 @@ function ParentFeedbackTab({ userId }) {
 const STATUS_COLOR = { pending: '#d97706', approved: '#16a34a', rejected: '#dc2626' };
 
 function RoleRequestsTab({ user }) {
+  const { realUser, mockRole, setMockRole } = useAuth();
+  const isRealAdmin = parseRoles(realUser?.roles).includes('admin');
   const currentRoles = parseRoles(user.roles);
   const available = ALL_ROLES.filter((r) => !currentRoles.includes(r));
 
@@ -822,6 +824,22 @@ function RoleRequestsTab({ user }) {
             ? currentRoles.map((r) => <RoleBadge key={r} role={r} />)
             : <span className="dp-no-roles">No roles assigned yet.</span>}
         </div>
+        {isRealAdmin && (
+          <div className="dp-mock-role">
+            <label className="dp-mock-role-label" htmlFor="mock-role-select">Preview as:</label>
+            <select
+              id="mock-role-select"
+              className="dp-mock-role-select"
+              value={mockRole || ''}
+              onChange={(e) => setMockRole(e.target.value || null)}
+            >
+              <option value="">— your actual roles —</option>
+              {ALL_ROLES.filter((r) => r !== 'admin').map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       <div className="dp-section">
