@@ -32,6 +32,8 @@ export function ClubSettingsPage() {
     secondary_color: '#3b82f6',
     accent_color: '#f59e0b',
   });
+  const [ageGroups,    setAgeGroups]    = useState([]);
+  const [newAgeGroup,  setNewAgeGroup]  = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -61,6 +63,33 @@ export function ClubSettingsPage() {
     settings.accent_color,
   ]);
 
+  useEffect(() => {
+    if (Array.isArray(settings.age_groups)) {
+      setAgeGroups(settings.age_groups);
+    }
+  }, [settings.age_groups]);
+
+  function moveAgeGroup(index, direction) {
+    setAgeGroups((prev) => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function removeAgeGroup(index) {
+    setAgeGroups((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addAgeGroup() {
+    const name = newAgeGroup.trim();
+    if (!name || ageGroups.includes(name)) return;
+    setAgeGroups((prev) => [...prev, name]);
+    setNewAgeGroup('');
+  }
+
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
     // Live CSS variable preview for colors
@@ -79,6 +108,11 @@ export function ClubSettingsPage() {
     setSuccess('');
     setSaving(true);
     try {
+      if (ageGroups.length === 0) {
+        setError('At least one age group is required.');
+        setSaving(false);
+        return;
+      }
       const payload = {
         club_name: form.club_name.trim(),
         mission_statement: form.mission_statement,
@@ -89,6 +123,7 @@ export function ClubSettingsPage() {
         primary_color: form.primary_color,
         secondary_color: form.secondary_color,
         accent_color: form.accent_color,
+        age_groups: ageGroups,
       };
       const updated = await apiFetch('/api/club-settings', {
         method: 'PUT',
@@ -229,6 +264,67 @@ export function ClubSettingsPage() {
               placeholder="e.g. 42 Main St, Riverside VIC 3000"
             />
           </label>
+        </section>
+
+        {/* ── Age Groups ── */}
+        <section className="cs-section">
+          <h2 className="cs-section-title">Age Groups</h2>
+          <p className="cs-section-hint">
+            Defines the selectable age groups across teams, players, and email targeting.
+            Order determines jersey-number conflict checking (adjacent groups share a pool).
+          </p>
+
+          {ageGroups.length === 0 && (
+            <p className="cs-age-empty">No age groups defined. Add at least one below.</p>
+          )}
+
+          <ol className="cs-age-list">
+            {ageGroups.map((ag, i) => (
+              <li key={ag} className="cs-age-row">
+                <span className="cs-age-name">{ag}</span>
+                <div className="cs-age-actions">
+                  <button
+                    type="button"
+                    className="cs-icon-btn"
+                    onClick={() => moveAgeGroup(i, -1)}
+                    disabled={i === 0}
+                    title="Move up"
+                  >↑</button>
+                  <button
+                    type="button"
+                    className="cs-icon-btn"
+                    onClick={() => moveAgeGroup(i, 1)}
+                    disabled={i === ageGroups.length - 1}
+                    title="Move down"
+                  >↓</button>
+                  <button
+                    type="button"
+                    className="cs-icon-btn cs-icon-btn--danger"
+                    onClick={() => removeAgeGroup(i)}
+                    title="Remove"
+                  >×</button>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="cs-age-add">
+            <input
+              className="cs-input cs-age-input"
+              placeholder="New age group name, e.g. U12 or Masters"
+              value={newAgeGroup}
+              onChange={(e) => setNewAgeGroup(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAgeGroup(); } }}
+            />
+            <button
+              type="button"
+              className="cs-btn cs-btn-secondary"
+              onClick={addAgeGroup}
+              disabled={!newAgeGroup.trim() || ageGroups.includes(newAgeGroup.trim())}
+            >
+              Add
+            </button>
+          </div>
         </section>
 
         {error && <p className="cs-error">{error}</p>}

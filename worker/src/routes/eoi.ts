@@ -5,7 +5,15 @@ import { requireRole } from '../middleware/requireRole';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
-const AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+
+async function getAgeGroups(db: D1Database): Promise<string[]> {
+  const row = await db.prepare(
+    `SELECT age_groups FROM club_settings LIMIT 1`
+  ).first<{ age_groups: string }>();
+  if (!row) return DEFAULT_AGE_GROUPS;
+  try { return JSON.parse(row.age_groups); } catch { return DEFAULT_AGE_GROUPS; }
+}
 
 function calculateAge(dob: string, cutoffDate: string): number {
   const birth = new Date(dob);
@@ -26,11 +34,11 @@ function ageToGroup(age: number): string {
   return 'Senior';
 }
 
-function adjacentGroups(ageGroup: string): string[] {
-  const i = AGE_GROUPS.indexOf(ageGroup);
+function adjacentGroups(ageGroup: string, ageGroups: string[]): string[] {
+  const i = ageGroups.indexOf(ageGroup);
   if (i === -1) return [ageGroup];
-  const indices = [i - 1, i, i + 1].filter((n) => n >= 0 && n < AGE_GROUPS.length);
-  return indices.map((n) => AGE_GROUPS[n] as string);
+  const indices = [i - 1, i, i + 1].filter((n) => n >= 0 && n < ageGroups.length);
+  return indices.map((n) => ageGroups[n] as string);
 }
 
 async function sendEmail(
@@ -167,7 +175,8 @@ app.put('/:id', authMiddleware, async (c) => {
   const isMinor = age < 18;
 
   // Check jersey conflict in adjacent age groups
-  const nearby = adjacentGroups(age_group);
+  const ageGroups = await getAgeGroups(c.env.DB);
+  const nearby = adjacentGroups(age_group, ageGroups);
   const placeholders = nearby.map(() => '?').join(', ');
   const conflict = await c.env.DB.prepare(
     `SELECT id FROM users WHERE jersey_number = ? AND age_group IN (${placeholders}) AND is_active = 1`

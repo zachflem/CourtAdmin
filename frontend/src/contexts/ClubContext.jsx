@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
+const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+
 const DEFAULT_SETTINGS = {
   club_name: 'Our Club',
   mission_statement: 'Excellence in sport, community, and development.',
@@ -13,7 +15,18 @@ const DEFAULT_SETTINGS = {
   logo_url: null,
   hero_image_url: null,
   about_image_url: null,
+  age_groups: DEFAULT_AGE_GROUPS,
 };
+
+function normaliseSettings(data) {
+  const raw = data.age_groups;
+  let age_groups = DEFAULT_AGE_GROUPS;
+  if (Array.isArray(raw)) age_groups = raw;
+  else if (typeof raw === 'string') {
+    try { age_groups = JSON.parse(raw); } catch { /* use default */ }
+  }
+  return { ...data, age_groups };
+}
 
 const ClubContext = createContext({ settings: DEFAULT_SETTINGS, setSettings: () => {} });
 
@@ -25,7 +38,7 @@ export function ClubProvider({ children }) {
   useEffect(() => {
     fetch(`${API_BASE}/api/club-settings`)
       .then((r) => r.json())
-      .then((data) => setSettings(data))
+      .then((data) => setSettings(normaliseSettings(data)))
       .catch(() => {});
   }, []);
 

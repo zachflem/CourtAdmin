@@ -187,6 +187,86 @@
   margin-bottom: 0.5rem;
 }
 
+/* ── Age groups editor ────────────────────────────────────────────────────── */
+
+.cs-age-empty {
+  font-size: 0.88rem;
+  color: #dc2626;
+  margin: 0;
+}
+
+.cs-age-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.cs-age-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #f9fafb;
+}
+
+.cs-age-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.cs-age-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.cs-icon-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s;
+}
+
+.cs-icon-btn:hover:not(:disabled) { background: #f3f4f6; }
+.cs-icon-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.cs-icon-btn--danger {
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+.cs-icon-btn--danger:hover:not(:disabled) { background: #fef2f2; }
+
+.cs-age-add {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.cs-age-input { flex: 1; }
+
+.cs-btn-secondary {
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  flex-shrink: 0;
+}
+.cs-btn-secondary:hover:not(:disabled) { background: #f3f4f6; }
+
 /* ── Image grid ───────────────────────────────────────────────────────────── */
 
 .cs-image-grid {

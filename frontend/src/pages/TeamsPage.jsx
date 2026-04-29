@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useClub } from '../contexts/ClubContext';
 import './TeamsPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-const AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
 const DIVISIONS = ['Div 1', 'Div 2', 'Div 3'];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -29,10 +29,12 @@ async function apiFetch(path, opts = {}) {
 // ─── Create Team Dialog ──────────────────────────────────────────────────────
 
 function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) {
+  const { settings: clubSettings } = useClub();
+  const ageGroups = clubSettings.age_groups || [];
   const [form, setForm] = useState({
     name: '',
     season_id: preselectedSeasonId || (seasons[0]?.id ?? ''),
-    age_group: AGE_GROUPS[0],
+    age_group: ageGroups[0] ?? '',
     division: DIVISIONS[0],
   });
   const [error, setError] = useState('');
@@ -100,7 +102,7 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
                 onChange={(e) => set('age_group', e.target.value)}
                 required
               >
-                {AGE_GROUPS.map((g) => (
+                {ageGroups.map((g) => (
                   <option key={g} value={g}>{g}</option>
                 ))}
               </select>
@@ -227,6 +229,8 @@ function MemberTab({ members, allUsers, onAdd, onRemove, removing }) {
 // ─── Team Management Dialog ──────────────────────────────────────────────────
 
 function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated }) {
+  const { settings: clubSettings } = useClub();
+  const ageGroups = clubSettings.age_groups || [];
   const [team, setTeam] = useState(initialTeam);
   const [activeTab, setActiveTab] = useState('players');
   const [editName, setEditName] = useState(initialTeam.name);
@@ -312,7 +316,7 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
               onChange={(e) => setEditAgeGroup(e.target.value)}
               onBlur={saveMeta}
             >
-              {AGE_GROUPS.map((g) => (
+              {ageGroups.map((g) => (
                 <option key={g} value={g}>{g}</option>
               ))}
             </select>

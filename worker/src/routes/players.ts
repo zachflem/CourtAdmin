@@ -5,7 +5,15 @@ import { requireRole } from '../middleware/requireRole';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
-const AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+
+async function getAgeGroups(db: D1Database): Promise<string[]> {
+  const row = await db.prepare(
+    `SELECT age_groups FROM club_settings LIMIT 1`
+  ).first<{ age_groups: string }>();
+  if (!row) return DEFAULT_AGE_GROUPS;
+  try { return JSON.parse(row.age_groups); } catch { return DEFAULT_AGE_GROUPS; }
+}
 
 const PLAYER_SELECT = `
   id, email, first_name, last_name, phone, address, emergency_contact,
@@ -28,12 +36,13 @@ app.get('/available-jersey-numbers/:age_group', async (c) => {
   if (denied) return denied;
 
   const ageGroup = c.req.param('age_group');
-  const i = AGE_GROUPS.indexOf(ageGroup);
+  const ageGroups = await getAgeGroups(c.env.DB);
+  const i = ageGroups.indexOf(ageGroup);
   if (i === -1) return c.json({ error: 'Invalid age group' }, 400);
 
   const nearby = [i - 1, i, i + 1]
-    .filter((n) => n >= 0 && n < AGE_GROUPS.length)
-    .map((n) => AGE_GROUPS[n]);
+    .filter((n) => n >= 0 && n < ageGroups.length)
+    .map((n) => ageGroups[n]);
 
   const placeholders = nearby.map(() => '?').join(', ');
   const { results } = await c.env.DB.prepare(

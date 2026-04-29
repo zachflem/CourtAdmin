@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useClub } from '../contexts/ClubContext';
 import './PlayersPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const ALL_ROLES = ['admin', 'committee', 'coach', 'manager', 'player', 'parent'];
-const AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -50,6 +50,8 @@ function StatusBadge({ isActive }) {
 // ─── User Details Dialog ─────────────────────────────────────────────────────
 
 function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
+  const { settings: clubSettings } = useClub();
+  const ageGroups = clubSettings.age_groups || [];
   const [form, setForm] = useState({
     first_name:            user.first_name || '',
     last_name:             user.last_name || '',
@@ -184,7 +186,7 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
                 Age Group
                 <select className="field-input" value={form.age_group} onChange={(e) => set('age_group', e.target.value)}>
                   <option value="">— select —</option>
-                  {AGE_GROUPS.map((g) => <option key={g}>{g}</option>)}
+                  {ageGroups.map((g) => <option key={g}>{g}</option>)}
                 </select>
               </label>
               <label className="field-label">

@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useClub } from '../contexts/ClubContext';
 import './EmailPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
-const ALL_ROLES      = ['admin', 'committee', 'coach', 'manager', 'player', 'parent'];
-const ALL_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const ALL_ROLES = ['admin', 'committee', 'coach', 'manager', 'player', 'parent'];
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -110,6 +110,8 @@ function TemplateDialog({ template, onClose, onSaved }) {
 // ─── Campaign Composer Dialog ─────────────────────────────────────────────────
 
 function CampaignComposerDialog({ templates, users, teams, onClose, onSent }) {
+  const { settings: clubSettings } = useClub();
+  const ageGroupOptions = clubSettings.age_groups || [];
   const [form, setForm] = useState({
     name:        '',
     subject:     '',
@@ -307,7 +309,7 @@ function CampaignComposerDialog({ templates, users, teams, onClose, onSent }) {
             <div className="field-label" style={{ marginTop: '1rem' }}>
               Recipients by age group
               <div className="role-toggles">
-                {ALL_AGE_GROUPS.map((ag) => (
+                {ageGroupOptions.map((ag) => (
                   <button
                     key={ag}
                     type="button"
