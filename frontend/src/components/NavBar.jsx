@@ -16,10 +16,8 @@ export function NavBar() {
       <nav className="navbar">
         <div className="navbar-inner">
           <Link to="/" className="navbar-brand">
-            {settings.logo_url ? (
-              <img src={settings.logo_url} alt={settings.club_name} className="navbar-logo" />
-            ) : null}
-            <span className="navbar-club-name">{settings.club_name}</span>
+            <img src="/logo.png" alt="" className="navbar-app-icon" />
+            <span className="navbar-club-name">{settings.club_name || 'CourtAdmin'}</span>
           </Link>
 
           <div className="navbar-links">

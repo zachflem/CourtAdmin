@@ -49,6 +49,10 @@ export function ClubProvider({ children }) {
     root.style.setProperty('--accent', settings.accent_color);
   }, [settings.primary_color, settings.secondary_color, settings.accent_color]);
 
+  useEffect(() => {
+    document.title = settings.club_name || 'CourtAdmin';
+  }, [settings.club_name]);
+
   return (
     <ClubContext.Provider value={{ settings, setSettings }}>
       {children}

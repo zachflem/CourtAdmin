@@ -535,3 +535,10 @@ Key differences from the original MongoDB design:
 - [x] Frontend build + Worker deploy (`npm run deploy`)
 - [x] Admin user seed (via ADMIN_SEED_EMAIL secret — auto-provisioned on first login)
 - [x] Post-deploy output: app URL, next steps
+
+---
+
+### Bugs & Fixes
+- [x] rename frontend app - match 'Club Name', defaults to 'CourtAdmin' if the name isn't set.
+- [ ] add /about and /contact pages to public frontend - tab on settings page for custom, html content. 
+- [x] add new icon.  favicon.png + logo.png placed in frontend/public/; favicon wired in index.html; logo shown in navbar; document.title updates from club_name via ClubContext.

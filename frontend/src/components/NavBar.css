@@ -34,6 +34,12 @@
   object-fit: contain;
 }
 
+.navbar-app-icon {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
 .navbar-club-name {
   color: #fff;
 }
