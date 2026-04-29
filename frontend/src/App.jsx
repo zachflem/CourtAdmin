@@ -9,6 +9,7 @@ import { TeamsPage } from './pages/TeamsPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EmailPage } from './pages/EmailPage';
+import { ClubSettingsPage } from './pages/ClubSettingsPage';
 
 function LoginPage() {
   return (
@@ -74,6 +75,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <EmailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <ClubSettingsPage />
             </ProtectedRoute>
           }
         />

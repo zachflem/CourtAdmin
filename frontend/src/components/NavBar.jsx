@@ -9,6 +9,7 @@ export function NavBar() {
 
   const roles = user ? JSON.parse(user.roles || '[]') : [];
   const isStaff = roles.includes('admin') || roles.includes('committee');
+  const isAdmin = roles.includes('admin');
 
   return (
     <>
@@ -30,6 +31,9 @@ export function NavBar() {
                 <Link to="/teams" className="navbar-link">Teams</Link>
                 <Link to="/players" className="navbar-link">Players</Link>
                 <Link to="/email" className="navbar-link">Email</Link>
+                {isAdmin && (
+                  <Link to="/settings" className="navbar-link">Settings</Link>
+                )}
               </>
             )}
           </div>

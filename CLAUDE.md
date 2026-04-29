@@ -78,6 +78,7 @@ Current D1 database ID: `33198368-5fdc-497d-bd78-2c480c08b566`
 - Phase 11 — Coach & Manager Dashboard
 - Phase 12 — Player Feedback System
 - Phase 13 — Email Campaigns
+- Phase 14 — Club Customization UI
 
 ### Next phase
-- Phase 14 — Club Customization UI
+- Phase 15 — Deploy Script (Final Polish)

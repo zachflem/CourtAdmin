@@ -519,11 +519,11 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 14 — Club Customization UI
-- [ ] Color pickers wired to `PUT /api/club-settings`
-- [ ] Text content editors (club name, mission, about)
-- [ ] Contact info fields
-- [ ] Image management components (upload/preview/delete for all 3 asset slots, using Phase 3 endpoints)
-- [ ] Live preview via `ClubProvider` context refresh
+- [x] Color pickers wired to `PUT /api/club-settings`
+- [x] Text content editors (club name, mission, about)
+- [x] Contact info fields
+- [x] Image management components (upload/preview/delete for all 3 asset slots, using Phase 3 endpoints)
+- [x] Live preview via `ClubProvider` context refresh
 
 ---
 
