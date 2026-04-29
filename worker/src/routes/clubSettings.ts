@@ -13,6 +13,10 @@ const ALLOWED_FIELDS = [
   'primary_color',
   'secondary_color',
   'accent_color',
+  'social_facebook',
+  'social_instagram',
+  'social_twitter',
+  'social_tiktok',
 ] as const;
 
 const DEFAULT_ENQUIRY_TYPES = [
@@ -62,6 +66,10 @@ app.get('/', async (c) => {
       logo_url: null,
       hero_image_url: null,
       about_image_url: null,
+      social_facebook: null,
+      social_instagram: null,
+      social_twitter: null,
+      social_tiktok: null,
       age_groups: DEFAULT_AGE_GROUPS,
       contact_enquiry_types: DEFAULT_ENQUIRY_TYPES,
     });

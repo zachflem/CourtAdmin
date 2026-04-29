@@ -20,6 +20,10 @@ const DEFAULT_SETTINGS = {
   logo_url: null,
   hero_image_url: null,
   about_image_url: null,
+  social_facebook: null,
+  social_instagram: null,
+  social_twitter: null,
+  social_tiktok: null,
   age_groups: DEFAULT_AGE_GROUPS,
   contact_enquiry_types: DEFAULT_ENQUIRY_TYPES,
 };

@@ -21,8 +21,8 @@ export function NavBar() {
           </Link>
 
           <div className="navbar-links">
-            <a href="#about" className="navbar-link">About</a>
-            <a href="#contact" className="navbar-link">Contact</a>
+            <a href="/#about" className="navbar-link">About</a>
+            <a href="/#contact" className="navbar-link">Contact</a>
             {isStaff && (
               <>
                 <Link to="/seasons" className="navbar-link">Seasons</Link>

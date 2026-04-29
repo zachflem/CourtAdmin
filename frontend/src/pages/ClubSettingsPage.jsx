@@ -31,6 +31,10 @@ export function ClubSettingsPage() {
     primary_color: '#1e40af',
     secondary_color: '#3b82f6',
     accent_color: '#f59e0b',
+    social_facebook: '',
+    social_instagram: '',
+    social_twitter: '',
+    social_tiktok: '',
   });
   const [ageGroups,      setAgeGroups]      = useState([]);
   const [newAgeGroup,    setNewAgeGroup]    = useState('');
@@ -52,6 +56,10 @@ export function ClubSettingsPage() {
       primary_color: settings.primary_color || '#1e40af',
       secondary_color: settings.secondary_color || '#3b82f6',
       accent_color: settings.accent_color || '#f59e0b',
+      social_facebook: settings.social_facebook || '',
+      social_instagram: settings.social_instagram || '',
+      social_twitter: settings.social_twitter || '',
+      social_tiktok: settings.social_tiktok || '',
     });
   }, [
     settings.club_name,
@@ -63,6 +71,10 @@ export function ClubSettingsPage() {
     settings.primary_color,
     settings.secondary_color,
     settings.accent_color,
+    settings.social_facebook,
+    settings.social_instagram,
+    settings.social_twitter,
+    settings.social_tiktok,
   ]);
 
   useEffect(() => {
@@ -150,6 +162,10 @@ export function ClubSettingsPage() {
         accent_color: form.accent_color,
         age_groups: ageGroups,
         contact_enquiry_types: enquiryTypes,
+        social_facebook: form.social_facebook,
+        social_instagram: form.social_instagram,
+        social_twitter: form.social_twitter,
+        social_tiktok: form.social_tiktok,
       };
       const updated = await apiFetch('/api/club-settings', {
         method: 'PUT',
@@ -289,6 +305,56 @@ export function ClubSettingsPage() {
               value={form.contact_address}
               onChange={(e) => set('contact_address', e.target.value)}
               placeholder="e.g. 42 Main St, Riverside VIC 3000"
+            />
+          </label>
+        </section>
+
+        {/* ── Social Media ── */}
+        <section className="cs-section">
+          <h2 className="cs-section-title">Social Media</h2>
+          <p className="cs-section-hint">Enter full URLs. Icons will appear at the bottom of the About section on your homepage.</p>
+
+          <label className="cs-field-label">
+            Facebook
+            <input
+              className="cs-input"
+              type="url"
+              value={form.social_facebook}
+              onChange={(e) => set('social_facebook', e.target.value)}
+              placeholder="https://facebook.com/yourclub"
+            />
+          </label>
+
+          <label className="cs-field-label">
+            Instagram
+            <input
+              className="cs-input"
+              type="url"
+              value={form.social_instagram}
+              onChange={(e) => set('social_instagram', e.target.value)}
+              placeholder="https://instagram.com/yourclub"
+            />
+          </label>
+
+          <label className="cs-field-label">
+            Twitter / X
+            <input
+              className="cs-input"
+              type="url"
+              value={form.social_twitter}
+              onChange={(e) => set('social_twitter', e.target.value)}
+              placeholder="https://x.com/yourclub"
+            />
+          </label>
+
+          <label className="cs-field-label">
+            TikTok
+            <input
+              className="cs-input"
+              type="url"
+              value={form.social_tiktok}
+              onChange={(e) => set('social_tiktok', e.target.value)}
+              placeholder="https://tiktok.com/@yourclub"
             />
           </label>
         </section>

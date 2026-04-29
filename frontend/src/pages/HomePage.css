@@ -167,6 +167,37 @@
   display: block;
 }
 
+/* ─── Social icons ──────────────────────────────────────── */
+.about-social {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 1.5rem;
+}
+
+.social-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--primary, #1e40af);
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.1s;
+}
+
+.social-icon-link:hover {
+  opacity: 0.85;
+  transform: translateY(-2px);
+}
+
+.social-icon-link svg {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}
+
 /* ─── Contact ────────────────────────────────────────────── */
 .contact-section {
   padding: 5rem 0;
