@@ -528,10 +528,10 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 15 — Deploy Script (Final Polish)
-- [ ] Full `deploy.sh` implementation with credential prompts
-- [ ] Wrangler secrets setup
-- [ ] D1 database create + migrations
-- [ ] R2 bucket create
-- [ ] Frontend build + Worker deploy (`npm run deploy`)
-- [ ] Admin user seed
-- [ ] Post-deploy output: app URL, next steps
+- [x] Full `deploy.sh` implementation with credential prompts
+- [x] Wrangler secrets setup
+- [x] D1 database create + migrations
+- [x] R2 bucket create
+- [x] Frontend build + Worker deploy (`npm run deploy`)
+- [x] Admin user seed (via ADMIN_SEED_EMAIL secret — auto-provisioned on first login)
+- [x] Post-deploy output: app URL, next steps
