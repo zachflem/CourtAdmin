@@ -136,6 +136,12 @@ app.post('/api/contact-messages/:id/reply', async (c) => {
   const from = c.env.RESEND_FROM_EMAIL || 'email@courtadmin.seezed.net';
   const clubName = settings?.club_name || 'Your Club';
 
+  const replier = c.get('user');
+  const replierName = [replier.first_name, replier.last_name].filter(Boolean).join(' ');
+  const signOff = include_name && replierName
+    ? `${replierName}, ${clubName}`
+    : clubName;
+
   const emailRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -158,11 +164,6 @@ ${message.trim().split('\n').map((line) => `<p>${line}</p>`).join('\n')}
     return c.json({ error: `Failed to send email: ${detail}` }, 502);
   }
 
-  const replier = c.get('user');
-  const replierName = [replier.first_name, replier.last_name].filter(Boolean).join(' ');
-  const signOff = include_name && replierName
-    ? `${replierName}, ${clubName}`
-    : clubName;
   const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
   await c.env.DB.prepare(
     `UPDATE contact_messages
