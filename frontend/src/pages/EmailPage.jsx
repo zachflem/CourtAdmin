@@ -3,7 +3,8 @@ import { useAuth } from '../contexts/AuthContext';
 import './EmailPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
-const ALL_ROLES = ['admin', 'committee', 'coach', 'manager', 'player', 'parent'];
+const ALL_ROLES      = ['admin', 'committee', 'coach', 'manager', 'player', 'parent'];
+const ALL_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
 
 async function apiFetch(path, opts = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -108,19 +109,21 @@ function TemplateDialog({ template, onClose, onSaved }) {
 
 // ─── Campaign Composer Dialog ─────────────────────────────────────────────────
 
-function CampaignComposerDialog({ templates, users, onClose, onSent }) {
+function CampaignComposerDialog({ templates, users, teams, onClose, onSent }) {
   const [form, setForm] = useState({
     name:        '',
     subject:     '',
     content:     '',
     template_id: '',
   });
-  const [recipientRoles,   setRecipientRoles]   = useState([]);
-  const [recipientUserIds, setRecipientUserIds] = useState([]);
-  const [userSearch,       setUserSearch]       = useState('');
-  const [sending,          setSending]          = useState(false);
-  const [error,            setError]            = useState('');
-  const [confirming,       setConfirming]       = useState(false);
+  const [recipientRoles,      setRecipientRoles]      = useState([]);
+  const [recipientAgeGroups,  setRecipientAgeGroups]  = useState([]);
+  const [recipientTeamIds,    setRecipientTeamIds]    = useState([]);
+  const [recipientUserIds,    setRecipientUserIds]    = useState([]);
+  const [userSearch,          setUserSearch]          = useState('');
+  const [sending,             setSending]             = useState(false);
+  const [error,               setError]               = useState('');
+  const [confirming,          setConfirming]          = useState(false);
 
   function set(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -143,6 +146,18 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
     );
   }
 
+  function toggleAgeGroup(ag) {
+    setRecipientAgeGroups((prev) =>
+      prev.includes(ag) ? prev.filter((a) => a !== ag) : [...prev, ag]
+    );
+  }
+
+  function toggleTeam(teamId) {
+    setRecipientTeamIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]
+    );
+  }
+
   function addUser(user) {
     if (!recipientUserIds.includes(user.id)) {
       setRecipientUserIds((prev) => [...prev, user.id]);
@@ -154,7 +169,8 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
     setRecipientUserIds((prev) => prev.filter((id) => id !== userId));
   }
 
-  // Estimate deduplicated recipient count from the loaded user list
+  // Estimate deduplicated count from the loaded user list (roles + age groups + individuals).
+  // Team membership isn't in the user list, so selected teams are shown separately.
   const byRoleIds = new Set(
     users
       .filter((u) => {
@@ -163,7 +179,12 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
       })
       .map((u) => u.id)
   );
-  const allRecipientIds = new Set([...byRoleIds, ...recipientUserIds]);
+  const byAgeGroupIds = new Set(
+    recipientAgeGroups.length > 0
+      ? users.filter((u) => recipientAgeGroups.includes(u.age_group)).map((u) => u.id)
+      : []
+  );
+  const allRecipientIds = new Set([...byRoleIds, ...byAgeGroupIds, ...recipientUserIds]);
   const recipientCount  = allRecipientIds.size;
 
   const filteredUsers = userSearch.length >= 2
@@ -187,12 +208,14 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
       const campaign = await apiFetch('/api/email-campaigns', {
         method: 'POST',
         body: JSON.stringify({
-          name:                form.name,
-          subject:             form.subject,
-          content:             form.content,
-          template_id:         form.template_id || null,
-          recipient_roles:     recipientRoles,
-          recipient_user_ids:  recipientUserIds,
+          name:                   form.name,
+          subject:                form.subject,
+          content:                form.content,
+          template_id:            form.template_id || null,
+          recipient_roles:        recipientRoles,
+          recipient_age_groups:   recipientAgeGroups,
+          recipient_team_ids:     recipientTeamIds,
+          recipient_user_ids:     recipientUserIds,
         }),
       });
       onSent(campaign);
@@ -205,8 +228,8 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
 
   function handleReview(e) {
     e.preventDefault();
-    if (recipientCount === 0) {
-      setError('Select at least one recipient role or user.');
+    if (recipientCount === 0 && recipientTeamIds.length === 0) {
+      setError('Select at least one recipient role, age group, team, or user.');
       return;
     }
     setError('');
@@ -282,6 +305,43 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
             </div>
 
             <div className="field-label" style={{ marginTop: '1rem' }}>
+              Recipients by age group
+              <div className="role-toggles">
+                {ALL_AGE_GROUPS.map((ag) => (
+                  <button
+                    key={ag}
+                    type="button"
+                    className={`role-toggle${recipientAgeGroups.includes(ag) ? ' role-toggle--active' : ''}`}
+                    onClick={() => toggleAgeGroup(ag)}
+                  >
+                    {ag}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {teams.length > 0 && (
+              <div className="field-label" style={{ marginTop: '1rem' }}>
+                Recipients by team
+                <div className="team-checkbox-list">
+                  {teams.map((t) => (
+                    <label key={t.id} className="team-checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={recipientTeamIds.includes(t.id)}
+                        onChange={() => toggleTeam(t.id)}
+                      />
+                      <span className="team-checkbox-name">{t.name}</span>
+                      <span className="team-checkbox-meta">
+                        {t.age_group}{t.division ? ` · ${t.division}` : ''} · {t.season_name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="field-label" style={{ marginTop: '1rem' }}>
               Individual recipients
               <input
                 className="field-input"
@@ -323,9 +383,15 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
               )}
             </div>
 
-            {recipientCount > 0 && (
+            {(recipientCount > 0 || recipientTeamIds.length > 0) && (
               <p className="recipient-count">
-                {recipientCount} recipient{recipientCount !== 1 ? 's' : ''} selected
+                {recipientCount > 0 && (
+                  <>{recipientCount} recipient{recipientCount !== 1 ? 's' : ''} from roles / age groups / individuals</>
+                )}
+                {recipientCount > 0 && recipientTeamIds.length > 0 && ' + '}
+                {recipientTeamIds.length > 0 && (
+                  <>{recipientTeamIds.length} team{recipientTeamIds.length !== 1 ? 's' : ''} (members resolved on send)</>
+                )}
               </p>
             )}
 
@@ -340,13 +406,23 @@ function CampaignComposerDialog({ templates, users, onClose, onSent }) {
           <div>
             <div className="confirm-box">
               <p className="confirm-message">
-                Send <strong>"{form.name}"</strong> to{' '}
-                <strong>{recipientCount} recipient{recipientCount !== 1 ? 's' : ''}</strong>?
+                Send <strong>"{form.name}"</strong>?
               </p>
               <p className="confirm-detail">Subject: {form.subject}</p>
               {recipientRoles.length > 0 && (
+                <p className="confirm-detail">Roles: {recipientRoles.join(', ')}</p>
+              )}
+              {recipientAgeGroups.length > 0 && (
+                <p className="confirm-detail">Age groups: {recipientAgeGroups.join(', ')}</p>
+              )}
+              {recipientTeamIds.length > 0 && (
                 <p className="confirm-detail">
-                  Roles: {recipientRoles.join(', ')}
+                  Teams: {recipientTeamIds.length} selected
+                </p>
+              )}
+              {recipientUserIds.length > 0 && (
+                <p className="confirm-detail">
+                  Individuals: {recipientUserIds.length} selected
                 </p>
               )}
             </div>
@@ -464,7 +540,7 @@ const STATUS_COLOR = {
   failed:  '#dc2626',
 };
 
-function CampaignsTab({ campaigns, templates, users, onRefresh }) {
+function CampaignsTab({ campaigns, templates, users, teams, onRefresh }) {
   const [composing, setComposing] = useState(false);
 
   return (
@@ -516,6 +592,7 @@ function CampaignsTab({ campaigns, templates, users, onRefresh }) {
         <CampaignComposerDialog
           templates={templates}
           users={users}
+          teams={teams}
           onClose={() => setComposing(false)}
           onSent={() => { setComposing(false); onRefresh(); }}
         />
@@ -535,6 +612,7 @@ export function EmailPage() {
   const [campaigns, setCampaigns] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [users,     setUsers]     = useState([]);
+  const [teams,     setTeams]     = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [error,     setError]     = useState('');
 
@@ -545,11 +623,13 @@ export function EmailPage() {
       apiFetch('/api/email-campaigns'),
       apiFetch('/api/email-templates'),
       apiFetch('/api/users'),
+      apiFetch('/api/teams'),
     ])
-      .then(([campaignsData, templatesData, usersData]) => {
+      .then(([campaignsData, templatesData, usersData, teamsData]) => {
         setCampaigns(campaignsData);
         setTemplates(templatesData);
         setUsers(usersData);
+        setTeams(teamsData);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -599,6 +679,7 @@ export function EmailPage() {
               campaigns={campaigns}
               templates={templates}
               users={users}
+              teams={teams}
               onRefresh={fetchData}
             />
           )}

@@ -226,6 +226,44 @@
   color: #fff;
 }
 
+/* ── Team checkbox selector ─────────────────────────────────────────────── */
+
+.team-checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 0.4rem 0;
+}
+
+.team-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: #111827;
+  transition: background 0.1s;
+}
+
+.team-checkbox-row:hover { background: #f9fafb; }
+
+.team-checkbox-row input[type="checkbox"] { flex-shrink: 0; cursor: pointer; }
+
+.team-checkbox-name { font-weight: 600; }
+
+.team-checkbox-meta {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-left: auto;
+}
+
 .user-search-results {
   border: 1px solid #e5e7eb;
   border-radius: 6px;

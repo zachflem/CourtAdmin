@@ -127,23 +127,29 @@ emailCampaignsRouter.post('/', async (c) => {
   if (denied) return denied;
 
   const caller = c.get('user');
-  const { name, subject, content, template_id, recipient_roles, recipient_user_ids } =
-    await c.req.json<{
-      name: string;
-      subject: string;
-      content: string;
-      template_id?: string;
-      recipient_roles?: string[];
-      recipient_user_ids?: string[];
-    }>();
+  const {
+    name, subject, content, template_id,
+    recipient_roles, recipient_user_ids, recipient_age_groups, recipient_team_ids,
+  } = await c.req.json<{
+    name: string;
+    subject: string;
+    content: string;
+    template_id?: string;
+    recipient_roles?: string[];
+    recipient_user_ids?: string[];
+    recipient_age_groups?: string[];
+    recipient_team_ids?: string[];
+  }>();
 
   if (!name || !subject || !content) {
     return c.json({ error: 'name, subject, and content are required' }, 400);
   }
-  const hasRoles = recipient_roles && recipient_roles.length > 0;
-  const hasUsers = recipient_user_ids && recipient_user_ids.length > 0;
-  if (!hasRoles && !hasUsers) {
-    return c.json({ error: 'At least one recipient role or user must be selected' }, 400);
+  const hasRoles      = recipient_roles      && recipient_roles.length > 0;
+  const hasUsers      = recipient_user_ids   && recipient_user_ids.length > 0;
+  const hasAgeGroups  = recipient_age_groups && recipient_age_groups.length > 0;
+  const hasTeams      = recipient_team_ids   && recipient_team_ids.length > 0;
+  if (!hasRoles && !hasUsers && !hasAgeGroups && !hasTeams) {
+    return c.json({ error: 'At least one recipient (role, age group, team, or user) must be selected' }, 400);
   }
 
   // Resolve recipients to a deduplicated map of user_id → email
@@ -161,6 +167,27 @@ emailCampaignsRouter.post('/', async (c) => {
         recipientMap.set(u.id, u.email);
       }
     }
+  }
+
+  if (hasAgeGroups) {
+    const placeholders = recipient_age_groups!.map(() => '?').join(', ');
+    const { results: ageUsers } = await c.env.DB.prepare(
+      `SELECT id, email FROM users WHERE age_group IN (${placeholders}) AND is_active = 1`
+    ).bind(...recipient_age_groups!).all<{ id: string; email: string }>();
+
+    for (const u of ageUsers) recipientMap.set(u.id, u.email);
+  }
+
+  if (hasTeams) {
+    const placeholders = recipient_team_ids!.map(() => '?').join(', ');
+    const { results: teamUsers } = await c.env.DB.prepare(
+      `SELECT DISTINCT u.id, u.email
+       FROM users u
+       JOIN team_players tp ON tp.user_id = u.id
+       WHERE tp.team_id IN (${placeholders}) AND u.is_active = 1`
+    ).bind(...recipient_team_ids!).all<{ id: string; email: string }>();
+
+    for (const u of teamUsers) recipientMap.set(u.id, u.email);
   }
 
   if (hasUsers) {
