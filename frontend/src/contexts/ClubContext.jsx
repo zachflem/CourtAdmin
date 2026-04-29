@@ -1,6 +1,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const DEFAULT_ENQUIRY_TYPES = [
+  { label: 'General Enquiry', forward_to: '' },
+  { label: 'Membership / Registration', forward_to: '' },
+  { label: 'Coaching / Volunteering', forward_to: '' },
+];
 
 const DEFAULT_SETTINGS = {
   club_name: 'Our Club',
@@ -16,16 +21,25 @@ const DEFAULT_SETTINGS = {
   hero_image_url: null,
   about_image_url: null,
   age_groups: DEFAULT_AGE_GROUPS,
+  contact_enquiry_types: DEFAULT_ENQUIRY_TYPES,
 };
 
 function normaliseSettings(data) {
-  const raw = data.age_groups;
+  const rawAg = data.age_groups;
   let age_groups = DEFAULT_AGE_GROUPS;
-  if (Array.isArray(raw)) age_groups = raw;
-  else if (typeof raw === 'string') {
-    try { age_groups = JSON.parse(raw); } catch { /* use default */ }
+  if (Array.isArray(rawAg)) age_groups = rawAg;
+  else if (typeof rawAg === 'string') {
+    try { age_groups = JSON.parse(rawAg); } catch { /* use default */ }
   }
-  return { ...data, age_groups };
+
+  const rawEt = data.contact_enquiry_types;
+  let contact_enquiry_types = DEFAULT_ENQUIRY_TYPES;
+  if (Array.isArray(rawEt)) contact_enquiry_types = rawEt;
+  else if (typeof rawEt === 'string') {
+    try { contact_enquiry_types = JSON.parse(rawEt); } catch { /* use default */ }
+  }
+
+  return { ...data, age_groups, contact_enquiry_types };
 }
 
 const ClubContext = createContext({ settings: DEFAULT_SETTINGS, setSettings: () => {} });

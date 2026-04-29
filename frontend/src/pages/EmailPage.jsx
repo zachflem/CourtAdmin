@@ -603,20 +603,61 @@ function CampaignsTab({ campaigns, templates, users, teams, onRefresh }) {
   );
 }
 
-// ─── EmailPage ────────────────────────────────────────────────────────────────
+// ─── Enquiries Tab ────────────────────────────────────────────────────────────
+
+function EnquiriesTab({ enquiries, onMarkRead, onDelete }) {
+  const unread = enquiries.filter((e) => !e.is_read).length;
+
+  return (
+    <div className="tab-panel">
+      {enquiries.length === 0 ? (
+        <p className="empty-text">No contact enquiries yet.</p>
+      ) : (
+        <div className="enquiry-list">
+          {enquiries.map((e) => (
+            <div key={e.id} className={`enquiry-card${e.is_read ? '' : ' enquiry-card--unread'}`}>
+              <div className="enquiry-card-header">
+                <div className="enquiry-meta">
+                  <span className="enquiry-name">{e.name}</span>
+                  <span className="enquiry-email">{e.email}</span>
+                  <span className="enquiry-type">{e.enquiry_type}</span>
+                  <span className="enquiry-date">{formatDate(e.created_at)}</span>
+                </div>
+                <div className="enquiry-actions">
+                  {!e.is_read && (
+                    <button className="btn btn-ghost btn-sm" onClick={() => onMarkRead(e.id)}>
+                      Mark read
+                    </button>
+                  )}
+                  <button className="btn btn-danger btn-sm" onClick={() => onDelete(e.id)}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+              <p className="enquiry-message">{e.message}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── MessagesPage ─────────────────────────────────────────────────────────────
 
 export function EmailPage() {
   const { user } = useAuth();
   const roles     = parseRoles(user?.roles);
   const canAccess = roles.includes('admin') || roles.includes('committee');
 
-  const [activeTab, setActiveTab] = useState('campaigns');
-  const [campaigns, setCampaigns] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [users,     setUsers]     = useState([]);
-  const [teams,     setTeams]     = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [error,     setError]     = useState('');
+  const [activeTab, setActiveTab] = useState('enquiries');
+  const [campaigns,  setCampaigns]  = useState([]);
+  const [templates,  setTemplates]  = useState([]);
+  const [users,      setUsers]      = useState([]);
+  const [teams,      setTeams]      = useState([]);
+  const [enquiries,  setEnquiries]  = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState('');
 
   const fetchData = useCallback(() => {
     setLoading(true);
@@ -626,18 +667,30 @@ export function EmailPage() {
       apiFetch('/api/email-templates'),
       apiFetch('/api/users'),
       apiFetch('/api/teams'),
+      apiFetch('/api/contact-messages'),
     ])
-      .then(([campaignsData, templatesData, usersData, teamsData]) => {
+      .then(([campaignsData, templatesData, usersData, teamsData, enquiriesData]) => {
         setCampaigns(campaignsData);
         setTemplates(templatesData);
         setUsers(usersData);
         setTeams(teamsData);
+        setEnquiries(enquiriesData);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  async function handleMarkRead(id) {
+    await apiFetch(`/api/contact-messages/${id}/read`, { method: 'PUT' });
+    setEnquiries((prev) => prev.map((e) => e.id === id ? { ...e, is_read: 1 } : e));
+  }
+
+  async function handleDelete(id) {
+    await apiFetch(`/api/contact-messages/${id}`, { method: 'DELETE' });
+    setEnquiries((prev) => prev.filter((e) => e.id !== id));
+  }
 
   if (!canAccess) {
     return (
@@ -647,7 +700,10 @@ export function EmailPage() {
     );
   }
 
+  const unreadCount = enquiries.filter((e) => !e.is_read).length;
+
   const tabs = [
+    { key: 'enquiries', label: `Enquiries${unreadCount > 0 ? ` (${unreadCount} new)` : ` (${enquiries.length})`}` },
     { key: 'campaigns', label: `Campaigns (${campaigns.length})` },
     { key: 'templates', label: `Templates (${templates.length})` },
   ];
@@ -655,7 +711,7 @@ export function EmailPage() {
   return (
     <div className="email-page">
       <div className="page-header">
-        <h1 className="page-title">Email Campaigns</h1>
+        <h1 className="page-title">Messages</h1>
       </div>
 
       <div className="tab-bar">
@@ -676,6 +732,13 @@ export function EmailPage() {
         <p className="loading-text">Loading…</p>
       ) : (
         <>
+          {activeTab === 'enquiries' && (
+            <EnquiriesTab
+              enquiries={enquiries}
+              onMarkRead={handleMarkRead}
+              onDelete={handleDelete}
+            />
+          )}
           {activeTab === 'campaigns' && (
             <CampaignsTab
               campaigns={campaigns}

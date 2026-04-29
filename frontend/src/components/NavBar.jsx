@@ -28,7 +28,7 @@ export function NavBar() {
                 <Link to="/seasons" className="navbar-link">Seasons</Link>
                 <Link to="/teams" className="navbar-link">Teams</Link>
                 <Link to="/players" className="navbar-link">Players</Link>
-                <Link to="/email" className="navbar-link">Email</Link>
+                <Link to="/email" className="navbar-link">Messages</Link>
                 {isAdmin && (
                   <Link to="/settings" className="navbar-link">Settings</Link>
                 )}

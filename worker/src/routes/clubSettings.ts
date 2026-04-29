@@ -15,6 +15,12 @@ const ALLOWED_FIELDS = [
   'accent_color',
 ] as const;
 
+const DEFAULT_ENQUIRY_TYPES = [
+  { label: 'General Enquiry', forward_to: '' },
+  { label: 'Membership / Registration', forward_to: '' },
+  { label: 'Coaching / Volunteering', forward_to: '' },
+];
+
 const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
 
 function parseAgeGroups(raw: unknown): string[] {
@@ -22,8 +28,20 @@ function parseAgeGroups(raw: unknown): string[] {
   try { return JSON.parse(raw as string); } catch { return DEFAULT_AGE_GROUPS; }
 }
 
-function withParsedAgeGroups(row: Record<string, unknown>) {
-  return { ...row, age_groups: parseAgeGroups(row.age_groups) };
+function parseEnquiryTypes(raw: unknown) {
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (Array.isArray(parsed)) return parsed;
+  } catch { /* fall through */ }
+  return DEFAULT_ENQUIRY_TYPES;
+}
+
+function withParsedFields(row: Record<string, unknown>) {
+  return {
+    ...row,
+    age_groups: parseAgeGroups(row.age_groups),
+    contact_enquiry_types: parseEnquiryTypes(row.contact_enquiry_types),
+  };
 }
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
@@ -45,9 +63,10 @@ app.get('/', async (c) => {
       hero_image_url: null,
       about_image_url: null,
       age_groups: DEFAULT_AGE_GROUPS,
+      contact_enquiry_types: DEFAULT_ENQUIRY_TYPES,
     });
   }
-  return c.json(withParsedAgeGroups(row));
+  return c.json(withParsedFields(row));
 });
 
 app.put('/', authMiddleware, async (c) => {
@@ -56,8 +75,9 @@ app.put('/', authMiddleware, async (c) => {
 
   const body = await c.req.json<Record<string, unknown>>();
 
-  // age_groups is a JSON array field — serialise it separately
+  // JSON array fields — serialise separately
   const ageGroupsRaw = body.age_groups;
+  const enquiryTypesRaw = body.contact_enquiry_types;
   const entries = Object.entries(body).filter(([k]) =>
     (ALLOWED_FIELDS as readonly string[]).includes(k)
   ) as [string, string][];
@@ -65,6 +85,10 @@ app.put('/', authMiddleware, async (c) => {
   if (ageGroupsRaw !== undefined) {
     const groups = parseAgeGroups(ageGroupsRaw);
     entries.push(['age_groups', JSON.stringify(groups)]);
+  }
+  if (enquiryTypesRaw !== undefined) {
+    const types = parseEnquiryTypes(enquiryTypesRaw);
+    entries.push(['contact_enquiry_types', JSON.stringify(types)]);
   }
 
   if (entries.length === 0) {
@@ -95,7 +119,7 @@ app.put('/', authMiddleware, async (c) => {
     .run();
 
   const updated = await c.env.DB.prepare('SELECT * FROM club_settings LIMIT 1').first<Record<string, unknown>>();
-  return c.json(withParsedAgeGroups(updated!));
+  return c.json(withParsedFields(updated!));
 });
 
 export default app;

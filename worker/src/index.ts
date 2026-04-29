@@ -15,6 +15,7 @@ import roleRequestsRoutes from './routes/roleRequests';
 import { coachesRouter, managersRouter, parentsRouter } from './routes/coaches';
 import feedbackRoutes from './routes/feedback';
 import { emailTemplatesRouter, emailCampaignsRouter } from './routes/emailCampaigns';
+import contactMessagesRoutes from './routes/contactMessages';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -45,6 +46,7 @@ app.route('/api/feedback', feedbackRoutes);
 app.route('/api/role-requests', roleRequestsRoutes);
 app.route('/api/email-templates', emailTemplatesRouter);
 app.route('/api/email-campaigns', emailCampaignsRouter);
+app.route('/', contactMessagesRoutes);
 
 // Serve R2 uploads — must come before the Assets fallback
 app.get('/uploads/:category/:filename', async (c) => {

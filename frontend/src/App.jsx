@@ -10,6 +10,7 @@ import { PlayersPage } from './pages/PlayersPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EmailPage } from './pages/EmailPage';
 import { ClubSettingsPage } from './pages/ClubSettingsPage';
+import { PlatformPage } from './pages/PlatformPage';
 
 function LoginPage() {
   return (
@@ -36,6 +37,7 @@ function AppRoutes() {
       <NavBar />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/platform" element={<PlatformPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route

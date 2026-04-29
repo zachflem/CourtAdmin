@@ -32,8 +32,10 @@ export function ClubSettingsPage() {
     secondary_color: '#3b82f6',
     accent_color: '#f59e0b',
   });
-  const [ageGroups,    setAgeGroups]    = useState([]);
-  const [newAgeGroup,  setNewAgeGroup]  = useState('');
+  const [ageGroups,      setAgeGroups]      = useState([]);
+  const [newAgeGroup,    setNewAgeGroup]    = useState('');
+  const [enquiryTypes,   setEnquiryTypes]   = useState([]);
+  const [newEnquiryLabel, setNewEnquiryLabel] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -69,6 +71,12 @@ export function ClubSettingsPage() {
     }
   }, [settings.age_groups]);
 
+  useEffect(() => {
+    if (Array.isArray(settings.contact_enquiry_types)) {
+      setEnquiryTypes(settings.contact_enquiry_types);
+    }
+  }, [settings.contact_enquiry_types]);
+
   function moveAgeGroup(index, direction) {
     setAgeGroups((prev) => {
       const next = [...prev];
@@ -88,6 +96,23 @@ export function ClubSettingsPage() {
     if (!name || ageGroups.includes(name)) return;
     setAgeGroups((prev) => [...prev, name]);
     setNewAgeGroup('');
+  }
+
+  function addEnquiryType() {
+    const label = newEnquiryLabel.trim();
+    if (!label || enquiryTypes.some((t) => t.label === label)) return;
+    setEnquiryTypes((prev) => [...prev, { label, forward_to: '' }]);
+    setNewEnquiryLabel('');
+  }
+
+  function removeEnquiryType(index) {
+    setEnquiryTypes((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function setEnquiryForwardTo(index, value) {
+    setEnquiryTypes((prev) =>
+      prev.map((t, i) => i === index ? { ...t, forward_to: value } : t)
+    );
   }
 
   function set(field, value) {
@@ -124,6 +149,7 @@ export function ClubSettingsPage() {
         secondary_color: form.secondary_color,
         accent_color: form.accent_color,
         age_groups: ageGroups,
+        contact_enquiry_types: enquiryTypes,
       };
       const updated = await apiFetch('/api/club-settings', {
         method: 'PUT',
@@ -321,6 +347,56 @@ export function ClubSettingsPage() {
               className="cs-btn cs-btn-secondary"
               onClick={addAgeGroup}
               disabled={!newAgeGroup.trim() || ageGroups.includes(newAgeGroup.trim())}
+            >
+              Add
+            </button>
+          </div>
+        </section>
+
+        {/* ── Enquiry Types ── */}
+        <section className="cs-section">
+          <h2 className="cs-section-title">Contact Enquiry Types</h2>
+          <p className="cs-section-hint">
+            Enquiry types shown on the public contact form. Set a forwarding email per type —
+            leave blank to fall back to the club contact email.
+          </p>
+
+          <ol className="cs-age-list">
+            {enquiryTypes.map((et, i) => (
+              <li key={et.label} className="cs-age-row cs-enquiry-row">
+                <span className="cs-age-name">{et.label}</span>
+                <input
+                  className="cs-input cs-enquiry-forward"
+                  type="email"
+                  placeholder="Forward to (optional)"
+                  value={et.forward_to}
+                  onChange={(e) => setEnquiryForwardTo(i, e.target.value)}
+                />
+                <div className="cs-age-actions">
+                  <button
+                    type="button"
+                    className="cs-icon-btn cs-icon-btn--danger"
+                    onClick={() => removeEnquiryType(i)}
+                    title="Remove"
+                  >×</button>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="cs-age-add">
+            <input
+              className="cs-input cs-age-input"
+              placeholder="New enquiry type, e.g. Sponsorship"
+              value={newEnquiryLabel}
+              onChange={(e) => setNewEnquiryLabel(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addEnquiryType(); } }}
+            />
+            <button
+              type="button"
+              className="cs-btn cs-btn-secondary"
+              onClick={addEnquiryType}
+              disabled={!newEnquiryLabel.trim() || enquiryTypes.some((t) => t.label === newEnquiryLabel.trim())}
             >
               Add
             </button>

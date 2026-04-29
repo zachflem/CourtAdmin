@@ -540,5 +540,7 @@ Key differences from the original MongoDB design:
 
 ### Bugs & Fixes
 - [x] rename frontend app - match 'Club Name', defaults to 'CourtAdmin' if the name isn't set.
-- [ ] add /about and /contact pages to public frontend - tab on settings page for custom, html content. 
+- [x] about and contact are homepage sections (id="about" / id="contact"); navbar links to anchors; content managed via existing Club Settings fields.
+- [x] contact form on homepage: name, email, enquiry type, message; stores to contact_messages table; forwards copy via Resend to per-type email (fallback: club contact_email); admin/committee inbox on Messages page; enquiry types configurable in Club Settings.
+- [x] homepage restructured: Features section removed; About and Contact are now separate sections; /platform page added (sells CourtAdmin platform, uses club colour scheme + logo.png, linked from footer as "Powered by CourtAdmin").
 - [x] add new icon.  favicon.png + logo.png placed in frontend/public/; favicon wired in index.html; logo shown in navbar; document.title updates from club_name via ClubContext.
