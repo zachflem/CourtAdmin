@@ -62,11 +62,8 @@ function HomeSponsorCard({ sponsor }) {
     sponsor.logo_medium_url || sponsor.logo_large_url || sponsor.logo_small_url;
   const card = (
     <div className="home-sponsor-card">
-      {logo ? (
-        <img src={logo} alt={sponsor.name} className="home-sponsor-logo" />
-      ) : (
-        <span className="home-sponsor-name">{sponsor.name}</span>
-      )}
+      {logo && <img src={logo} alt={sponsor.name} className="home-sponsor-logo" />}
+      <span className="home-sponsor-name">{sponsor.name}</span>
     </div>
   );
   return sponsor.website_url ? (

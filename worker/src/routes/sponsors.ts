@@ -53,6 +53,8 @@ app.post('/', async (c) => {
     contact_email?: string;
     contact_phone?: string;
     description?: string;
+    package_start?: string;
+    package_end?: string;
     show_on_homepage?: boolean;
   }>();
 
@@ -61,8 +63,8 @@ app.post('/', async (c) => {
 
   const id = crypto.randomUUID().replace(/-/g, '').toLowerCase();
   await c.env.DB.prepare(
-    `INSERT INTO sponsors (id, name, tier, website_url, contact_name, contact_email, contact_phone, description, show_on_homepage)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO sponsors (id, name, tier, website_url, contact_name, contact_email, contact_phone, description, package_start, package_end, show_on_homepage)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       id,
@@ -73,6 +75,8 @@ app.post('/', async (c) => {
       body.contact_email || null,
       body.contact_phone || null,
       body.description || null,
+      body.package_start || null,
+      body.package_end || null,
       body.show_on_homepage ? 1 : 0
     )
     .run();
@@ -110,6 +114,8 @@ app.put('/:id', async (c) => {
     contact_email?: string | null;
     contact_phone?: string | null;
     description?: string | null;
+    package_start?: string | null;
+    package_end?: string | null;
     show_on_homepage: boolean;
     is_active: boolean;
   }>();
@@ -126,6 +132,8 @@ app.put('/:id', async (c) => {
        contact_email = ?,
        contact_phone = ?,
        description = ?,
+       package_start = ?,
+       package_end = ?,
        show_on_homepage = ?,
        is_active = ?,
        updated_at = datetime('now')
@@ -139,6 +147,8 @@ app.put('/:id', async (c) => {
       body.contact_email || null,
       body.contact_phone || null,
       body.description || null,
+      body.package_start || null,
+      body.package_end || null,
       body.show_on_homepage ? 1 : 0,
       body.is_active !== false ? 1 : 0,
       id

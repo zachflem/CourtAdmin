@@ -126,6 +126,8 @@ function CreateSponsorDialog({ onClose, onCreated }) {
     contact_email: '',
     contact_phone: '',
     description: '',
+    package_start: '',
+    package_end: '',
     show_on_homepage: false,
   });
   const [error, setError] = useState('');
@@ -237,6 +239,27 @@ function CreateSponsorDialog({ onClose, onCreated }) {
               placeholder="Brief description of the sponsor…"
             />
           </label>
+
+          <div className="field-row">
+            <label className="field-label">
+              Package Start
+              <input
+                className="field-input"
+                type="date"
+                value={form.package_start}
+                onChange={(e) => set('package_start', e.target.value)}
+              />
+            </label>
+            <label className="field-label">
+              Package End
+              <input
+                className="field-input"
+                type="date"
+                value={form.package_end}
+                onChange={(e) => set('package_end', e.target.value)}
+              />
+            </label>
+          </div>
 
           <label className="field-checkbox">
             <input
@@ -357,6 +380,8 @@ function DetailsTab({ sponsor, onUpdated, onDeleted }) {
     contact_email: sponsor.contact_email || '',
     contact_phone: sponsor.contact_phone || '',
     description: sponsor.description || '',
+    package_start: sponsor.package_start || '',
+    package_end: sponsor.package_end || '',
     show_on_homepage: Boolean(sponsor.show_on_homepage),
     is_active: sponsor.is_active !== 0,
   });
@@ -481,6 +506,27 @@ function DetailsTab({ sponsor, onUpdated, onDeleted }) {
           rows={3}
         />
       </label>
+
+      <div className="field-row">
+        <label className="field-label">
+          Package Start
+          <input
+            className="field-input"
+            type="date"
+            value={form.package_start}
+            onChange={(e) => set('package_start', e.target.value)}
+          />
+        </label>
+        <label className="field-label">
+          Package End
+          <input
+            className="field-input"
+            type="date"
+            value={form.package_end}
+            onChange={(e) => set('package_end', e.target.value)}
+          />
+        </label>
+      </div>
 
       <div className="field-checkboxes">
         <label className="field-checkbox">
