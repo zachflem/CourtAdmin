@@ -349,12 +349,100 @@ function PlayersTab({ users, onEditUser }) {
 
 // ─── All Users Tab ───────────────────────────────────────────────────────────
 
+function ImportModal({ onClose, onDone }) {
+  const [importFile, setImportFile] = useState(null);
+  const [sendWelcome, setSendWelcome] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  async function handleSubmit() {
+    if (!importFile) return;
+    setImporting(true);
+    try {
+      const csv = await importFile.text();
+      const result = await apiFetch('/api/users/import', {
+        method: 'POST',
+        body: JSON.stringify({ csv, sendWelcome, customMessage: welcomeMessage }),
+      });
+      onDone(result);
+    } catch (err) {
+      onDone({ error: err.message });
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Import Users</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ marginBottom: '6px' }}
+            >
+              Choose CSV file
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              style={{ display: 'none' }}
+              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+            />
+            {importFile && (
+              <p style={{ margin: 0, fontSize: '0.875rem', color: '#555' }}>{importFile.name}</p>
+            )}
+          </div>
+
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={sendWelcome}
+              onChange={(e) => setSendWelcome(e.target.checked)}
+            />
+            <span>Send welcome email to newly added users</span>
+          </label>
+
+          {sendWelcome && (
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Custom message <span style={{ fontWeight: 400, color: '#888' }}>(optional)</span></label>
+              <textarea
+                className="form-input"
+                rows={3}
+                placeholder="e.g. You've been registered for the 2025 season."
+                value={welcomeMessage}
+                onChange={(e) => setWelcomeMessage(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost" onClick={onClose} disabled={importing}>Cancel</button>
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={!importFile || importing}
+          >
+            {importing ? 'Importing…' : 'Import'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AllUsersTab({ users, onEditUser, onImportDone }) {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
-  const [importing, setImporting] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const [importResult, setImportResult] = useState(null);
-  const fileInputRef = useRef(null);
 
   const filtered = users.filter((u) => {
     const matchesSearch = (() => {
@@ -382,29 +470,21 @@ function AllUsersTab({ users, onEditUser, onImportDone }) {
     URL.revokeObjectURL(url);
   }
 
-  async function handleImportFile(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImportResult(null);
-    setImporting(true);
-    try {
-      const csv = await file.text();
-      const result = await apiFetch('/api/users/import', {
-        method: 'POST',
-        body: JSON.stringify({ csv }),
-      });
-      setImportResult(result);
-      onImportDone();
-    } catch (err) {
-      setImportResult({ error: err.message });
-    } finally {
-      setImporting(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+  function handleImportDone(result) {
+    setImportModalOpen(false);
+    setImportResult(result);
+    if (!result.error) onImportDone();
   }
 
   return (
     <div>
+      {importModalOpen && (
+        <ImportModal
+          onClose={() => setImportModalOpen(false)}
+          onDone={handleImportDone}
+        />
+      )}
+
       <div className="toolbar">
         <input
           className="search-input"
@@ -425,20 +505,9 @@ function AllUsersTab({ users, onEditUser, onImportDone }) {
           <button className="btn btn-ghost btn-sm" onClick={handleExport}>
             Export CSV
           </button>
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importing}
-          >
-            {importing ? 'Importing…' : 'Import CSV'}
+          <button className="btn btn-ghost btn-sm" onClick={() => setImportModalOpen(true)}>
+            Import CSV
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,text/csv"
-            style={{ display: 'none' }}
-            onChange={handleImportFile}
-          />
         </div>
       </div>
 
@@ -449,6 +518,7 @@ function AllUsersTab({ users, onEditUser, onImportDone }) {
           ) : (
             <span>
               Import complete — {importResult.created} created, {importResult.updated} updated
+              {importResult.emailsSent > 0 && `, ${importResult.emailsSent} welcome email${importResult.emailsSent !== 1 ? 's' : ''} sent`}
               {importResult.errors?.length > 0 && ` (${importResult.errors.length} row errors)`}
             </span>
           )}

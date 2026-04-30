@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env, HonoVariables } from '../types';
 import { authMiddleware } from '../middleware/auth';
 import { requireRole } from '../middleware/requireRole';
+import { sendEmail } from '../lib/email';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -41,22 +42,6 @@ function adjacentGroups(ageGroup: string, ageGroups: string[]): string[] {
   return indices.map((n) => ageGroups[n] as string);
 }
 
-async function sendEmail(
-  env: Env,
-  to: string,
-  subject: string,
-  html: string,
-): Promise<void> {
-  const from = env.RESEND_FROM_EMAIL || 'email@courtadmin.seezed.net';
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ from, to, subject, html }),
-  });
-}
 
 // ── Authenticated routes ─────────────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env, HonoVariables } from '../types';
 import { authMiddleware } from '../middleware/auth';
 import { requireRole } from '../middleware/requireRole';
+import { sendEmail } from '../lib/email';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -68,7 +69,7 @@ app.post('/import', async (c) => {
   const denied = requireRole(c, ['admin']);
   if (denied) return denied;
 
-  const body = await c.req.json<{ csv: string }>();
+  const body = await c.req.json<{ csv: string; sendWelcome?: boolean; customMessage?: string }>();
   if (!body?.csv) return c.json({ error: 'csv field is required' }, 400);
 
   const lines = body.csv.split(/\r?\n/).filter((l) => l.trim());
@@ -90,6 +91,7 @@ app.post('/import', async (c) => {
   let created = 0;
   let updated = 0;
   const errors: string[] = [];
+  const newUsers: { email: string; first_name: string }[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const row = parseCsvLine(lines[i]!);
@@ -129,13 +131,53 @@ app.post('/import', async (c) => {
           `INSERT INTO users (email, first_name, last_name, roles) VALUES (?, ?, ?, ?)`
         ).bind(email, first_name, last_name, roles).run();
         created++;
+        newUsers.push({ email, first_name });
       }
     } catch (err) {
       errors.push(`Row ${i + 1} (${email}): ${err instanceof Error ? err.message : String(err)}`);
     }
   }
 
-  return c.json({ created, updated, errors });
+  let emailsSent = 0;
+  let emailErrors = 0;
+
+  if (body.sendWelcome && newUsers.length > 0) {
+    const settings = await c.env.DB.prepare(
+      `SELECT club_name FROM club_settings LIMIT 1`
+    ).first<{ club_name: string }>();
+    const clubName = settings?.club_name || 'Your Club';
+    const portalUrl = c.env.FRONTEND_URL || '';
+
+    for (const u of newUsers) {
+      try {
+        const greeting = u.first_name ? `Hi ${u.first_name},` : 'Hi,';
+        const customBlock = body.customMessage?.trim()
+          ? `<p style="margin:16px 0;padding:12px 16px;background:#f5f5f5;border-left:3px solid #666;border-radius:4px;">${body.customMessage.trim()}</p>`
+          : '';
+        const html = `
+<div style="font-family:sans-serif;max-width:560px;margin:0 auto;color:#222;">
+  <p style="margin:0 0 16px;">${greeting}</p>
+  <p style="margin:0 0 16px;">
+    An account has been created for you on the <strong>${clubName}</strong> member portal.
+    The portal is used by the club to manage memberships, share updates, and communicate with players, parents, coaches, and volunteers.
+  </p>
+  ${customBlock}
+  <p style="margin:0 0 8px;font-weight:600;">How to sign in</p>
+  <p style="margin:0 0 16px;">
+    Visit <a href="${portalUrl}" style="color:#2563eb;">${portalUrl}</a> and enter your email address
+    (<strong>${u.email}</strong>). You'll receive a sign-in link by email — no password required.
+  </p>
+  <p style="margin:0;color:#666;font-size:0.9em;">— ${clubName}</p>
+</div>`;
+        await sendEmail(c.env, u.email, `Welcome to ${clubName}`, html);
+        emailsSent++;
+      } catch {
+        emailErrors++;
+      }
+    }
+  }
+
+  return c.json({ created, updated, errors, emailsSent, emailErrors });
 });
 
 // PUT /api/users/:id — update user fields (admin only)
