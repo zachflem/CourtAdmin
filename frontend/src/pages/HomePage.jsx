@@ -55,33 +55,68 @@ function StatCard({ value, label }) {
   );
 }
 
-// ─── Sponsor card used on the homepage ───────────────────────────────────────
+// ─── Sponsor modal ───────────────────────────────────────────────────────────
 
-function HomeSponsorCard({ sponsor }) {
+function SponsorModal({ sponsor, onClose }) {
   const logo =
-    sponsor.logo_medium_url || sponsor.logo_large_url || sponsor.logo_small_url;
-  const card = (
-    <div className="home-sponsor-card">
-      {logo && <img src={logo} alt={sponsor.name} className="home-sponsor-logo" />}
-      <span className="home-sponsor-name">{sponsor.name}</span>
+    sponsor.logo_large_url || sponsor.logo_medium_url || sponsor.logo_small_url;
+
+  // Close on backdrop click or Escape key
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="sponsor-modal-backdrop" onClick={onClose}>
+      <div className="sponsor-modal" onClick={(e) => e.stopPropagation()}>
+        <button className="sponsor-modal-close" onClick={onClose} aria-label="Close">✕</button>
+
+        {logo && (
+          <div className="sponsor-modal-logo-wrap">
+            <img src={logo} alt={sponsor.name} className="sponsor-modal-logo" />
+          </div>
+        )}
+
+        <h2 className="sponsor-modal-name">{sponsor.name}</h2>
+
+        {sponsor.description && (
+          <p className="sponsor-modal-description">{sponsor.description}</p>
+        )}
+
+        {sponsor.website_url && (
+          <a
+            href={sponsor.website_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sponsor-modal-cta"
+          >
+            Visit {sponsor.name}'s website
+          </a>
+        )}
+      </div>
     </div>
   );
-  return sponsor.website_url ? (
-    <a
-      href={sponsor.website_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="home-sponsor-link"
-    >
-      {card}
-    </a>
-  ) : (
-    card
+}
+
+// ─── Sponsor card used on the homepage ───────────────────────────────────────
+
+function HomeSponsorCard({ sponsor, onSelect }) {
+  const logo =
+    sponsor.logo_medium_url || sponsor.logo_large_url || sponsor.logo_small_url;
+  return (
+    <button className="home-sponsor-card" onClick={() => onSelect(sponsor)}>
+      {logo && <img src={logo} alt={sponsor.name} className="home-sponsor-logo" />}
+      <span className="home-sponsor-name">{sponsor.name}</span>
+    </button>
   );
 }
 
 // Auto-rotating carousel for silver + bronze sponsors
-function SponsorCarousel({ sponsors }) {
+function SponsorCarousel({ sponsors, onSelect }) {
   const VISIBLE = 4;
   const [startIdx, setStartIdx] = useState(0);
   const timerRef = useRef(null);
@@ -102,7 +137,7 @@ function SponsorCarousel({ sponsors }) {
   return (
     <div className="sponsor-carousel">
       {visible.map((s) => (
-        <HomeSponsorCard key={s.id} sponsor={s} />
+        <HomeSponsorCard key={s.id} sponsor={s} onSelect={onSelect} />
       ))}
     </div>
   );
@@ -113,6 +148,7 @@ export function HomePage() {
   const [stats, setStats] = useState(null);
   const [showEOI, setShowEOI] = useState(false);
   const [sponsors, setSponsors] = useState([]);
+  const [activeSponsor, setActiveSponsor] = useState(null);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/homepage-stats`)
@@ -174,13 +210,13 @@ export function HomePage() {
               {gold.length > 0 && (
                 <div className="sponsors-gold-row">
                   {gold.map((s) => (
-                    <HomeSponsorCard key={s.id} sponsor={s} />
+                    <HomeSponsorCard key={s.id} sponsor={s} onSelect={setActiveSponsor} />
                   ))}
                 </div>
               )}
               {rotating.length > 0 && (
                 <div className="sponsors-rotating-row">
-                  <SponsorCarousel sponsors={rotating} />
+                  <SponsorCarousel sponsors={rotating} onSelect={setActiveSponsor} />
                 </div>
               )}
             </div>
@@ -262,6 +298,9 @@ export function HomePage() {
       </footer>
 
       {showEOI && <EOIFormDialog onClose={() => setShowEOI(false)} />}
+      {activeSponsor && (
+        <SponsorModal sponsor={activeSponsor} onClose={() => setActiveSponsor(null)} />
+      )}
     </div>
   );
 }

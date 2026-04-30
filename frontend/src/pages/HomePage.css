@@ -310,11 +310,6 @@
 }
 
 /* Individual sponsor card on homepage */
-.home-sponsor-link {
-  text-decoration: none;
-  display: block;
-}
-
 .home-sponsor-card {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -328,10 +323,12 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  cursor: pointer;
+  /* reset button styles */
+  font-family: inherit;
   transition: box-shadow 0.15s, transform 0.15s;
 }
 
-.home-sponsor-link:hover .home-sponsor-card,
 .home-sponsor-card:hover {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
@@ -359,6 +356,103 @@
   font-weight: 600;
   color: #6b7280;
   text-align: center;
+}
+
+/* ─── Sponsor modal ──────────────────────────────────────────── */
+
+.sponsor-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.sponsor-modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 420px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.sponsor-modal-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #9ca3af;
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.sponsor-modal-close:hover {
+  color: #111827;
+  background: #f3f4f6;
+}
+
+.sponsor-modal-logo-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.sponsor-modal-logo {
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+}
+
+.sponsor-modal-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.sponsor-modal-description {
+  font-size: 0.92rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sponsor-modal-cta {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  background: var(--primary, #1e40af);
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: filter 0.15s;
+}
+
+.sponsor-modal-cta:hover {
+  filter: brightness(1.1);
 }
 
 /* ─── Responsive ─────────────────────────────────────────── */
