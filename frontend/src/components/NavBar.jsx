@@ -30,6 +30,7 @@ export function NavBar() {
                 <Link to="/teams" className="navbar-link">Teams</Link>
                 <Link to="/venues" className="navbar-link">Venues</Link>
                 <Link to="/players" className="navbar-link">Players</Link>
+                <Link to="/sponsors" className="navbar-link">Sponsors</Link>
                 <Link to="/email" className="navbar-link">Messages</Link>
                 {isAdmin && (
                   <Link to="/settings" className="navbar-link">Settings</Link>

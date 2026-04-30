@@ -17,6 +17,7 @@ import feedbackRoutes from './routes/feedback';
 import { emailTemplatesRouter, emailCampaignsRouter } from './routes/emailCampaigns';
 import contactMessagesRoutes from './routes/contactMessages';
 import venuesRoutes from './routes/venues';
+import sponsorsRoutes from './routes/sponsors';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -49,6 +50,30 @@ app.route('/api/email-templates', emailTemplatesRouter);
 app.route('/api/email-campaigns', emailCampaignsRouter);
 app.route('/', contactMessagesRoutes);
 app.route('/api/venues', venuesRoutes);
+
+// Public sponsors list for homepage — no auth required
+app.get('/api/sponsors/public', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    `SELECT id, name, tier, website_url, description, logo_small_url, logo_medium_url, logo_large_url
+     FROM sponsors
+     WHERE show_on_homepage = 1 AND is_active = 1
+     ORDER BY CASE tier WHEN 'gold' THEN 1 WHEN 'silver' THEN 2 WHEN 'bronze' THEN 3 ELSE 4 END, name`
+  ).all();
+  return c.json(results);
+});
+
+app.route('/api/sponsors', sponsorsRoutes);
+
+// Serve sponsor logos (4-level path — must come before shorter routes below)
+app.get('/uploads/sponsor-logos/:sponsorId/:size/:filename', async (c) => {
+  const key = `sponsor-logos/${c.req.param('sponsorId')}/${c.req.param('size')}/${c.req.param('filename')}`;
+  const obj = await c.env.UPLOADS.get(key);
+  if (!obj) return c.json({ error: 'Not found' }, 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('etag', obj.httpEtag);
+  return new Response(obj.body, { headers });
+});
 
 // Serve venue documents (3-level path — must come before the 2-level route below)
 app.get('/uploads/venue-docs/:venueId/:filename', async (c) => {

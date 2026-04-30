@@ -270,6 +270,95 @@
   text-decoration: underline;
 }
 
+/* ─── Sponsors Section ──────────────────────────────────── */
+
+.sponsors-section {
+  background: #f9fafb;
+  padding: 3rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sponsors-inner {
+  text-align: center;
+}
+
+.sponsors-heading {
+  margin-bottom: 1.75rem;
+}
+
+/* Gold sponsors row — always visible, larger cards */
+.sponsors-gold-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Silver/Bronze rotating row */
+.sponsors-rotating-row {
+  border-top: 1px dashed #e5e7eb;
+  padding-top: 1.25rem;
+}
+
+.sponsor-carousel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* Individual sponsor card on homepage */
+.home-sponsor-link {
+  text-decoration: none;
+  display: block;
+}
+
+.home-sponsor-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem 1.5rem;
+  min-width: 160px;
+  max-width: 220px;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.home-sponsor-link:hover .home-sponsor-card,
+.home-sponsor-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Gold cards are slightly larger */
+.sponsors-gold-row .home-sponsor-card {
+  min-width: 200px;
+  max-width: 280px;
+  min-height: 100px;
+}
+
+.home-sponsor-logo {
+  max-width: 100%;
+  max-height: 70px;
+  object-fit: contain;
+}
+
+.sponsors-gold-row .home-sponsor-logo {
+  max-height: 90px;
+}
+
+.home-sponsor-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .about-inner {

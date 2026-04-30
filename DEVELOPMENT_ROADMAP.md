@@ -324,7 +324,40 @@ D1 tables: `email_templates`, `email_campaigns`
 
 ---
 
-### 17. Deploy Script
+### 17. Sponsor Management (Admin / Committee)
+
+D1 table: `sponsors`
+
+Fields: `id`, `name`, `tier` (gold / silver / bronze / general), `website_url`, `contact_name`, `contact_email`, `contact_phone`, `description`, `logo_small_url`, `logo_medium_url`, `logo_large_url`, `show_on_homepage`, `is_active`, `created_at`, `updated_at`
+
+**Tier system:**
+- **Gold** — permanent cards always visible on the homepage sponsors section
+- **Silver / Bronze** — shown in a rotating carousel on the homepage
+- **General** — not displayed on homepage
+
+**Endpoints:**
+- `GET /api/sponsors/public` — public, no auth; returns active `show_on_homepage = 1` sponsors ordered by tier
+- `GET /api/sponsors` — all sponsors (admin / committee)
+- `POST /api/sponsors` — create
+- `GET /api/sponsors/:id` — detail
+- `PUT /api/sponsors/:id` — full update
+- `DELETE /api/sponsors/:id` — delete (cascades R2 logo cleanup)
+- `POST /api/sponsors/:id/logo/:size` — upload logo (small / medium / large) to R2
+- `DELETE /api/sponsors/:id/logo/:size` — remove logo from R2
+
+**R2:** sponsor logos stored at `sponsor-logos/{sponsorId}/{size}/{filename}`, served via `/uploads/sponsor-logos/:sponsorId/:size/:filename`
+
+**UI:**
+- `/sponsors` page (admin / committee) — tier-filtered grid of sponsor cards
+- Create Sponsor dialog: name, tier, website, contact info, description, show_on_homepage checkbox
+- Manage Sponsor dialog with two tabs:
+  - **Details** — all editable fields, active/inactive toggle, delete with confirmation
+  - **Media Pack** — upload / preview / remove logo images for small, medium, and large sizes
+- Homepage sponsors section: Gold row (permanent) + Silver/Bronze rotating carousel (3-second auto-advance), only shown when `show_on_homepage = 1` sponsors exist
+
+---
+
+### 18. Deploy Script
 
 `deploy.sh` prompts for all required credentials and stands up a fresh instance:
 
@@ -539,25 +572,45 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 16 — Venue Management
-- [ ] Migration `0010_venues.sql` — `venues`, `venue_timeslots`, `venue_access`, `venue_documents`, `team_timeslot_assignments` tables
-- [ ] `GET /api/venues` (admin / committee / coach / manager — returns venues with timeslots + counts)
-- [ ] `GET /api/venues/:id` (admin / committee — full detail with timeslots + assigned teams, access, documents)
-- [ ] `POST /api/venues` (admin / committee)
-- [ ] `PUT /api/venues/:id` (admin / committee)
-- [ ] `DELETE /api/venues/:id` (admin / committee — cascades R2 doc cleanup)
-- [ ] `POST /api/venues/:id/timeslots` — add a weekly timeslot
-- [ ] `DELETE /api/venues/:id/timeslots/:timeslotId`
-- [ ] `POST /api/venues/:id/access` — grant user access (key / card / code / other)
-- [ ] `DELETE /api/venues/:id/access/:userId`
-- [ ] `POST /api/venues/:id/documents` — upload doc to R2 (`venue-docs/{venueId}/…`)
-- [ ] `DELETE /api/venues/:id/documents/:docId`
-- [ ] `PUT /api/teams/:id` extended — `add_timeslots` / `remove_timeslots` arrays
-- [ ] `GET /api/coaches/:id/teams` + `GET /api/managers/:id/teams` — include `training` array
-- [ ] `/uploads/venue-docs/:venueId/:filename` serving route (3-level R2 path)
-- [ ] Frontend: `/venues` page — venue cards grid, Create Venue dialog, Manage dialog (5 tabs: Details, Timeslots, Access, Documents, Assigned Teams)
-- [ ] Timeslots tab — team assignment UI (assign / unassign team per slot)
-- [ ] Coach / manager: Venues link in NavBar; read-only venue list on `/venues`
-- [ ] Coach / manager dashboard — training venue section on each team card (venue name, address, schedule chips)
+- [x] Migration `0010_venues.sql` — `venues`, `venue_timeslots`, `venue_access`, `venue_documents`, `team_timeslot_assignments` tables
+- [x] `GET /api/venues` (admin / committee / coach / manager — returns venues with timeslots + counts)
+- [x] `GET /api/venues/:id` (admin / committee — full detail with timeslots + assigned teams, access, documents)
+- [x] `POST /api/venues` (admin / committee)
+- [x] `PUT /api/venues/:id` (admin / committee)
+- [x] `DELETE /api/venues/:id` (admin / committee — cascades R2 doc cleanup)
+- [x] `POST /api/venues/:id/timeslots` — add a weekly timeslot
+- [x] `DELETE /api/venues/:id/timeslots/:timeslotId`
+- [x] `POST /api/venues/:id/access` — grant user access (key / card / code / other)
+- [x] `DELETE /api/venues/:id/access/:userId`
+- [x] `POST /api/venues/:id/documents` — upload doc to R2 (`venue-docs/{venueId}/…`)
+- [x] `DELETE /api/venues/:id/documents/:docId`
+- [x] `PUT /api/teams/:id` extended — `add_timeslots` / `remove_timeslots` arrays
+- [x] `GET /api/coaches/:id/teams` + `GET /api/managers/:id/teams` — include `training` array
+- [x] `/uploads/venue-docs/:venueId/:filename` serving route (3-level R2 path)
+- [x] Frontend: `/venues` page — venue cards grid, Create Venue dialog, Manage dialog (5 tabs: Details, Timeslots, Access, Documents, Assigned Teams)
+- [x] Timeslots tab — team assignment UI (assign / unassign team per slot)
+- [x] Coach / manager: Venues link in NavBar; read-only venue list on `/venues`
+- [x] Coach / manager dashboard — training venue section on each team card (venue name, address, schedule chips)
+
+---
+
+### Phase 17 — Sponsor Management
+- [x] Migration `0011_sponsors.sql` — `sponsors` table
+- [x] `GET /api/sponsors/public` — public endpoint (no auth), ordered by tier
+- [x] `GET /api/sponsors` (admin / committee)
+- [x] `POST /api/sponsors` (admin / committee)
+- [x] `GET /api/sponsors/:id` (admin / committee)
+- [x] `PUT /api/sponsors/:id` — full update (admin / committee)
+- [x] `DELETE /api/sponsors/:id` — cascades R2 logo cleanup (admin / committee)
+- [x] `POST /api/sponsors/:id/logo/:size` — upload logo to R2 (small / medium / large)
+- [x] `DELETE /api/sponsors/:id/logo/:size` — remove logo from R2
+- [x] R2 serving route: `/uploads/sponsor-logos/:sponsorId/:size/:filename` (4-level path)
+- [x] Frontend: `/sponsors` page — tier-filter bar, sponsor card grid
+- [x] Create Sponsor dialog
+- [x] Manage Sponsor dialog — Details tab (edit + delete) and Media Pack tab (upload/preview/remove per size)
+- [x] NavBar: Sponsors link for admin / committee
+- [x] Homepage sponsors section: Gold permanent row + Silver/Bronze auto-rotating carousel
+- [x] `DEVELOPMENT_ROADMAP.md` updated
 
 ---
 
@@ -570,27 +623,3 @@ Key differences from the original MongoDB design:
 - [ ] investigate any way to speed up the loading process?  there is a flash of the default colours that pops up as the page loads
 - [ ] investigate adding an instagram carousel to the homepage.  set the url and grab the last N posts
 
----
-
-### Venue Management
-The purpose of venue management is to allow the club to keep track of 3rd party venues for training and other events.  
-For the venue itself, we need to track the Contact Info, Availability (what times the club has the venue booked), Access Instructions, Who has access (which coaches/comittee have keys/cards for the venue), the cost of each session (per/hour), any documentation required by the venue (doc upload)
-
-For each team, we need to assign them a training location based on the available venues and timeslots and visualise this on a /venues page.  Coaches and Managers should see their venue info when they view their assigned teams on the /teams page.
-
-**D1 tables:** `venues`, `venue_timeslots`, `venue_access`, `venue_documents`, `team_timeslot_assignments`
-
-**Endpoints (admin / committee):** Full CRUD on venues, timeslots, access holders, and documents.
-
-**Endpoints (coach / manager):** `GET /api/venues` (read-only list with timeslots).
-
-**Assign teams to timeslots:** via `PUT /api/teams/:id` with `add_timeslots` / `remove_timeslots` arrays.
-
-**R2:** venue docs stored at `venue-docs/{venue_id}/{filename}`, served via `/uploads/venue-docs/:venueId/:filename`.
-
----
-
-### Sponsor Management
-The purpose of sponsor management is to collate info about sponsors, ensure we have a media pack available (various image sizes[small], [medium], [large]) and all the relevant info about the sponsor.
-
-We should have a /sponsors page where all this is entered, and we should also use this info to highlight sponsors on the homepage (enabled by a checkbox on the sponsor listing) The frequency display would be dictated by the level of sponsorship purchased by the sponsor.  Let's work on a Gold, Silver, Bronze tier system, with a General level below that (4 tiers total).  Gold sponsors get a permanant card on the homepage, with silver and bronze getting rotated.

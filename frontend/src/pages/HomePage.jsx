@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useClub } from '../contexts/ClubContext';
 import { EOIFormDialog } from '../components/EOIFormDialog';
@@ -55,15 +55,79 @@ function StatCard({ value, label }) {
   );
 }
 
+// ─── Sponsor card used on the homepage ───────────────────────────────────────
+
+function HomeSponsorCard({ sponsor }) {
+  const logo =
+    sponsor.logo_medium_url || sponsor.logo_large_url || sponsor.logo_small_url;
+  const card = (
+    <div className="home-sponsor-card">
+      {logo ? (
+        <img src={logo} alt={sponsor.name} className="home-sponsor-logo" />
+      ) : (
+        <span className="home-sponsor-name">{sponsor.name}</span>
+      )}
+    </div>
+  );
+  return sponsor.website_url ? (
+    <a
+      href={sponsor.website_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="home-sponsor-link"
+    >
+      {card}
+    </a>
+  ) : (
+    card
+  );
+}
+
+// Auto-rotating carousel for silver + bronze sponsors
+function SponsorCarousel({ sponsors }) {
+  const VISIBLE = 4;
+  const [startIdx, setStartIdx] = useState(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (sponsors.length <= VISIBLE) return;
+    timerRef.current = setInterval(() => {
+      setStartIdx((i) => (i + 1) % sponsors.length);
+    }, 3000);
+    return () => clearInterval(timerRef.current);
+  }, [sponsors.length]);
+
+  const visible = [];
+  for (let i = 0; i < Math.min(VISIBLE, sponsors.length); i++) {
+    visible.push(sponsors[(startIdx + i) % sponsors.length]);
+  }
+
+  return (
+    <div className="sponsor-carousel">
+      {visible.map((s) => (
+        <HomeSponsorCard key={s.id} sponsor={s} />
+      ))}
+    </div>
+  );
+}
+
 export function HomePage() {
   const { settings } = useClub();
   const [stats, setStats] = useState(null);
   const [showEOI, setShowEOI] = useState(false);
+  const [sponsors, setSponsors] = useState([]);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/homepage-stats`)
       .then((r) => r.json())
       .then(setStats)
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/sponsors/public`)
+      .then((r) => r.json())
+      .then(setSponsors)
       .catch(() => {});
   }, []);
 
@@ -101,6 +165,31 @@ export function HomePage() {
           <StatCard value={stats.coaches_and_staff} label="Coaches & Staff" />
         </section>
       )}
+
+      {/* Sponsors */}
+      {sponsors.length > 0 && (() => {
+        const gold = sponsors.filter((s) => s.tier === 'gold');
+        const rotating = sponsors.filter((s) => s.tier === 'silver' || s.tier === 'bronze');
+        return (
+          <section className="sponsors-section" id="sponsors">
+            <div className="section-inner sponsors-inner">
+              <h2 className="section-heading sponsors-heading">Our Sponsors</h2>
+              {gold.length > 0 && (
+                <div className="sponsors-gold-row">
+                  {gold.map((s) => (
+                    <HomeSponsorCard key={s.id} sponsor={s} />
+                  ))}
+                </div>
+              )}
+              {rotating.length > 0 && (
+                <div className="sponsors-rotating-row">
+                  <SponsorCarousel sponsors={rotating} />
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* About */}
       <section className="about" id="about">

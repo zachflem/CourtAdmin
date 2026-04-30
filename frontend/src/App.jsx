@@ -12,6 +12,7 @@ import { EmailPage } from './pages/EmailPage';
 import { ClubSettingsPage } from './pages/ClubSettingsPage';
 import { PlatformPage } from './pages/PlatformPage';
 import { VenuesPage } from './pages/VenuesPage';
+import { SponsorsPage } from './pages/SponsorsPage';
 
 function LoginPage() {
   return (
@@ -86,6 +87,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <VenuesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/sponsors"
+          element={
+            <ProtectedRoute>
+              <SponsorsPage />
             </ProtectedRoute>
           }
         />
