@@ -38,6 +38,8 @@ export function ClubSettingsPage() {
   });
   const [ageGroups,      setAgeGroups]      = useState([]);
   const [newAgeGroup,    setNewAgeGroup]    = useState('');
+  const [divisions,      setDivisions]      = useState([]);
+  const [newDivision,    setNewDivision]    = useState('');
   const [enquiryTypes,   setEnquiryTypes]   = useState([]);
   const [newEnquiryLabel, setNewEnquiryLabel] = useState('');
   const [saving, setSaving] = useState(false);
@@ -84,6 +86,12 @@ export function ClubSettingsPage() {
   }, [settings.age_groups]);
 
   useEffect(() => {
+    if (Array.isArray(settings.divisions)) {
+      setDivisions(settings.divisions);
+    }
+  }, [settings.divisions]);
+
+  useEffect(() => {
     if (Array.isArray(settings.contact_enquiry_types)) {
       setEnquiryTypes(settings.contact_enquiry_types);
     }
@@ -108,6 +116,27 @@ export function ClubSettingsPage() {
     if (!name || ageGroups.includes(name)) return;
     setAgeGroups((prev) => [...prev, name]);
     setNewAgeGroup('');
+  }
+
+  function moveDivision(index, direction) {
+    setDivisions((prev) => {
+      const next = [...prev];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function removeDivision(index) {
+    setDivisions((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addDivision() {
+    const name = newDivision.trim();
+    if (!name || divisions.includes(name)) return;
+    setDivisions((prev) => [...prev, name]);
+    setNewDivision('');
   }
 
   function addEnquiryType() {
@@ -161,6 +190,7 @@ export function ClubSettingsPage() {
         secondary_color: form.secondary_color,
         accent_color: form.accent_color,
         age_groups: ageGroups,
+        divisions: divisions,
         contact_enquiry_types: enquiryTypes,
         social_facebook: form.social_facebook,
         social_instagram: form.social_instagram,
@@ -414,6 +444,66 @@ export function ClubSettingsPage() {
               className="cs-btn cs-btn-secondary"
               onClick={addAgeGroup}
               disabled={!newAgeGroup.trim() || ageGroups.includes(newAgeGroup.trim())}
+            >
+              Add
+            </button>
+          </div>
+        </section>
+
+        {/* ── Divisions ── */}
+        <section className="cs-section">
+          <h2 className="cs-section-title">Divisions</h2>
+          <p className="cs-section-hint">
+            Defines the selectable divisions for teams. Order determines how they appear in dropdowns.
+          </p>
+
+          {divisions.length === 0 && (
+            <p className="cs-age-empty">No divisions defined. Add at least one below.</p>
+          )}
+
+          <ol className="cs-age-list">
+            {divisions.map((div, i) => (
+              <li key={div} className="cs-age-row">
+                <span className="cs-age-name">{div}</span>
+                <div className="cs-age-actions">
+                  <button
+                    type="button"
+                    className="cs-icon-btn"
+                    onClick={() => moveDivision(i, -1)}
+                    disabled={i === 0}
+                    title="Move up"
+                  >↑</button>
+                  <button
+                    type="button"
+                    className="cs-icon-btn"
+                    onClick={() => moveDivision(i, 1)}
+                    disabled={i === divisions.length - 1}
+                    title="Move down"
+                  >↓</button>
+                  <button
+                    type="button"
+                    className="cs-icon-btn cs-icon-btn--danger"
+                    onClick={() => removeDivision(i)}
+                    title="Remove"
+                  >×</button>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="cs-age-add">
+            <input
+              className="cs-input cs-age-input"
+              placeholder="New division name, e.g. Div 4 or Premier"
+              value={newDivision}
+              onChange={(e) => setNewDivision(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addDivision(); } }}
+            />
+            <button
+              type="button"
+              className="cs-btn cs-btn-secondary"
+              onClick={addDivision}
+              disabled={!newDivision.trim() || divisions.includes(newDivision.trim())}
             >
               Add
             </button>

@@ -5,7 +5,6 @@ import './TeamsPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-const DIVISIONS = ['Div 1', 'Div 2', 'Div 3'];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -31,11 +30,12 @@ async function apiFetch(path, opts = {}) {
 function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) {
   const { settings: clubSettings } = useClub();
   const ageGroups = clubSettings.age_groups || [];
+  const divisions = clubSettings.divisions || [];
   const [form, setForm] = useState({
     name: '',
     season_id: preselectedSeasonId || (seasons[0]?.id ?? ''),
     age_group: ageGroups[0] ?? '',
-    division: DIVISIONS[0],
+    division: divisions[0] ?? '',
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -116,7 +116,7 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
                 onChange={(e) => set('division', e.target.value)}
                 required
               >
-                {DIVISIONS.map((d) => (
+                {divisions.map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
               </select>
@@ -231,11 +231,12 @@ function MemberTab({ members, allUsers, onAdd, onRemove, removing }) {
 function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated }) {
   const { settings: clubSettings } = useClub();
   const ageGroups = clubSettings.age_groups || [];
+  const divisions = clubSettings.divisions || [];
   const [team, setTeam] = useState(initialTeam);
   const [activeTab, setActiveTab] = useState('players');
   const [editName, setEditName] = useState(initialTeam.name);
   const [editAgeGroup, setEditAgeGroup] = useState(initialTeam.age_group);
-  const [editDivision, setEditDivision] = useState(initialTeam.division ?? DIVISIONS[0]);
+  const [editDivision, setEditDivision] = useState(initialTeam.division ?? divisions[0] ?? '');
   const [savingMeta, setSavingMeta] = useState(false);
   const [metaError, setMetaError] = useState('');
   const [removing, setRemoving] = useState(null);
@@ -248,7 +249,7 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
   }, [initialTeam.id]);
 
   async function saveMeta() {
-    if (editName === team.name && editAgeGroup === team.age_group && editDivision === (team.division ?? DIVISIONS[0])) return;
+    if (editName === team.name && editAgeGroup === team.age_group && editDivision === (team.division ?? divisions[0] ?? '')) return;
     setMetaError('');
     setSavingMeta(true);
     try {
@@ -326,7 +327,7 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
               onChange={(e) => setEditDivision(e.target.value)}
               onBlur={saveMeta}
             >
-              {DIVISIONS.map((d) => (
+              {divisions.map((d) => (
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>

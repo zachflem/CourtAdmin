@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const DEFAULT_DIVISIONS = ['Div 1', 'Div 2', 'Div 3'];
 const DEFAULT_ENQUIRY_TYPES = [
   { label: 'General Enquiry', forward_to: '' },
   { label: 'Membership / Registration', forward_to: '' },
@@ -25,6 +26,7 @@ const DEFAULT_SETTINGS = {
   social_twitter: null,
   social_tiktok: null,
   age_groups: DEFAULT_AGE_GROUPS,
+  divisions: DEFAULT_DIVISIONS,
   contact_enquiry_types: DEFAULT_ENQUIRY_TYPES,
 };
 
@@ -43,7 +45,14 @@ function normaliseSettings(data) {
     try { contact_enquiry_types = JSON.parse(rawEt); } catch { /* use default */ }
   }
 
-  return { ...data, age_groups, contact_enquiry_types };
+  const rawDiv = data.divisions;
+  let divisions = DEFAULT_DIVISIONS;
+  if (Array.isArray(rawDiv)) divisions = rawDiv;
+  else if (typeof rawDiv === 'string') {
+    try { divisions = JSON.parse(rawDiv); } catch { /* use default */ }
+  }
+
+  return { ...data, age_groups, divisions, contact_enquiry_types };
 }
 
 const ClubContext = createContext({ settings: DEFAULT_SETTINGS, setSettings: () => {} });

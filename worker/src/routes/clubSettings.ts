@@ -26,10 +26,16 @@ const DEFAULT_ENQUIRY_TYPES = [
 ];
 
 const DEFAULT_AGE_GROUPS = ['U8', 'U10', 'U12', 'U14', 'U16', 'U18', 'Senior'];
+const DEFAULT_DIVISIONS = ['Div 1', 'Div 2', 'Div 3'];
 
 function parseAgeGroups(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw as string[];
   try { return JSON.parse(raw as string); } catch { return DEFAULT_AGE_GROUPS; }
+}
+
+function parseDivisions(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw as string[];
+  try { return JSON.parse(raw as string); } catch { return DEFAULT_DIVISIONS; }
 }
 
 function parseEnquiryTypes(raw: unknown) {
@@ -44,6 +50,7 @@ function withParsedFields(row: Record<string, unknown>) {
   return {
     ...row,
     age_groups: parseAgeGroups(row.age_groups),
+    divisions: parseDivisions(row.divisions),
     contact_enquiry_types: parseEnquiryTypes(row.contact_enquiry_types),
   };
 }
@@ -71,6 +78,7 @@ app.get('/', async (c) => {
       social_twitter: null,
       social_tiktok: null,
       age_groups: DEFAULT_AGE_GROUPS,
+      divisions: DEFAULT_DIVISIONS,
       contact_enquiry_types: DEFAULT_ENQUIRY_TYPES,
     });
   }
@@ -85,6 +93,7 @@ app.put('/', authMiddleware, async (c) => {
 
   // JSON array fields — serialise separately
   const ageGroupsRaw = body.age_groups;
+  const divisionsRaw = body.divisions;
   const enquiryTypesRaw = body.contact_enquiry_types;
   const entries = Object.entries(body).filter(([k]) =>
     (ALLOWED_FIELDS as readonly string[]).includes(k)
@@ -93,6 +102,10 @@ app.put('/', authMiddleware, async (c) => {
   if (ageGroupsRaw !== undefined) {
     const groups = parseAgeGroups(ageGroupsRaw);
     entries.push(['age_groups', JSON.stringify(groups)]);
+  }
+  if (divisionsRaw !== undefined) {
+    const divs = parseDivisions(divisionsRaw);
+    entries.push(['divisions', JSON.stringify(divs)]);
   }
   if (enquiryTypesRaw !== undefined) {
     const types = parseEnquiryTypes(enquiryTypesRaw);
