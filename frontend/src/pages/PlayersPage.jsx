@@ -351,7 +351,7 @@ function PlayersTab({ users, onEditUser }) {
 
 function ImportModal({ onClose, onDone }) {
   const [importFile, setImportFile] = useState(null);
-  const [sendWelcome, setSendWelcome] = useState(false);
+  const [sendWelcome, setSendWelcome] = useState(true);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);

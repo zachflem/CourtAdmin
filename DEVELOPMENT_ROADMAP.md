@@ -626,7 +626,7 @@ Key differences from the original MongoDB design:
 - [ ] revise the Division mechanic from Phase 8 - currently it's a hard coded list, I want to make it a dynamic list like Age Groups is now.
 - [ ] we've currently got Player Management containing user management, EOIs and feedback.  I think we should move EOIs into the messaging page, this fits a bit better in there.  All users and Role requests should be either their own page.
 - [ ] add a grading system.  not to automate the grading process, but to provide a mechanism for grading an age group of players.  Export a PDF with all the players registered for the upcoming season, filter by age and gender, show previous teams and grading levels, and provide space for coaches to make notes and a new grading determination.  once complete, we provide a mechanism for updating the info.  Coaches aren't going to carry around a laptop, it's much more likely to be a clipboard.  So we should cater to that kind of data gathering.
-- [ ] the user bulk import didn't send the welcome email, and ignored Jersy #, Date of Birth, Age Group from the CSV.
+- [x] the user bulk import didn't send the welcome email, and ignored Jersy #, Date of Birth, Age Group from the CSV.
 - [x] The edit user modal has the heading and subheading (users email) overlapped
 - [ ] investigate any way to speed up the loading process?  there is a flash of the default colours that pops up as the page loads
 - [x] rename the 'General' tier of sponser to "Supporter" across the platform

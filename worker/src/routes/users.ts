@@ -127,9 +127,20 @@ app.post('/import', async (c) => {
         const first_name = rowData.first_name || '';
         const last_name = rowData.last_name || '';
         const roles = rowData.roles || '[]';
+        const extraCols = UPDATABLE.filter(
+          (col) => col !== 'first_name' && col !== 'last_name' && col !== 'roles'
+            && header.includes(col) && rowData[col] !== ''
+        );
+        const allCols = ['email', 'first_name', 'last_name', 'roles', ...extraCols];
+        const allVals = [
+          email, first_name, last_name, roles,
+          ...extraCols.map((col) =>
+            INTEGER_COLS.has(col) ? (rowData[col] ? Number(rowData[col]) : null) : (rowData[col] || null)
+          ),
+        ];
         await c.env.DB.prepare(
-          `INSERT INTO users (email, first_name, last_name, roles) VALUES (?, ?, ?, ?)`
-        ).bind(email, first_name, last_name, roles).run();
+          `INSERT INTO users (${allCols.join(', ')}) VALUES (${allCols.map(() => '?').join(', ')})`
+        ).bind(...allVals).run();
         created++;
         newUsers.push({ email, first_name });
       }
