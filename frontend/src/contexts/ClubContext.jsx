@@ -85,6 +85,8 @@ export function ClubProvider({ children }) {
     root.style.setProperty('--color-secondary', settings.secondary_color);
     root.style.setProperty('--accent', settings.accent_color);
     root.style.setProperty('--color-accent', settings.accent_color);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) metaTheme.setAttribute('content', settings.primary_color);
     try {
       localStorage.setItem('ca_theme', JSON.stringify({
         p: settings.primary_color,

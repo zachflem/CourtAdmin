@@ -800,20 +800,20 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 20 — Document Management
-- [ ] Migration — `documents` + `document_acknowledgements` tables
-- [ ] `GET /api/documents/public` (no auth)
-- [ ] `GET /api/documents` (authenticated; role-scoped visibility)
-- [ ] `POST /api/documents` — R2 upload + record create (admin / committee)
-- [ ] `PUT /api/documents/:id` — update metadata / replace file (admin / committee)
-- [ ] `DELETE /api/documents/:id` — record + R2 cleanup (admin / committee)
-- [ ] `POST /api/documents/:id/acknowledge` (authenticated user)
-- [ ] `GET /api/documents/:id/acknowledgements` (admin / committee)
-- [ ] R2 serving route: `/uploads/documents/:docId/:filename`
-- [ ] Frontend: `/documents` page — admin/committee management view (upload, edit, delete)
-- [ ] Frontend: member document list with acknowledge button on required docs
-- [ ] Frontend: acknowledgement status table per document (admin/committee)
-- [ ] NavBar: Documents link for appropriate roles
-- [ ] `DEVELOPMENT_ROADMAP.md` updated
+- [x] Migration `0020_documents.sql` — `documents` + `document_acknowledgements` tables
+- [x] `GET /api/documents/public` (no auth — inline in index.ts)
+- [x] `GET /api/documents` (authenticated; all authenticated users; includes `user_has_acknowledged` per doc)
+- [x] `POST /api/documents` — R2 upload + record create (admin / committee)
+- [x] `PUT /api/documents/:id` — update metadata / replace file (admin / committee)
+- [x] `DELETE /api/documents/:id` — record + R2 cleanup (admin / committee)
+- [x] `POST /api/documents/:id/acknowledge` (authenticated user; upsert — idempotent)
+- [x] `GET /api/documents/:id/acknowledgements` (admin / committee — acknowledged + not-yet-acknowledged lists)
+- [x] R2 serving route: `/uploads/documents/:docId/:filename` (3-level, before generic 2-level route)
+- [x] Frontend: `/documents` page — admin/committee management view (upload, edit, delete)
+- [x] Frontend: member document list with acknowledge button on required docs; green badge when done
+- [x] Frontend: acknowledgement status table per document in ManageDocumentDialog (admin/committee)
+- [x] NavBar: Documents link for staff (admin/committee) and coach/manager menus
+- [x] `DEVELOPMENT_ROADMAP.md` updated
 
 ---
 

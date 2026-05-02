@@ -14,6 +14,7 @@ import { VenuesPage } from './pages/VenuesPage';
 import { SponsorsPage } from './pages/SponsorsPage';
 import { UsersPage } from './pages/UsersPage';
 import { GradingPrintPage } from './pages/GradingPrintPage';
+import { DocumentsPage } from './pages/DocumentsPage';
 
 function LoginPage() {
   return (
@@ -96,6 +97,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <UsersPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/documents"
+          element={
+            <ProtectedRoute>
+              <DocumentsPage />
             </ProtectedRoute>
           }
         />

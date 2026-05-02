@@ -20,6 +20,7 @@ import venuesRoutes from './routes/venues';
 import sponsorsRoutes from './routes/sponsors';
 import positionsRoutes from './routes/positions';
 import gradingRoutes from './routes/grading';
+import documentsRoutes from './routes/documents';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -68,9 +69,34 @@ app.route('/api/sponsors', sponsorsRoutes);
 app.route('/api/club-positions', positionsRoutes);
 app.route('/api/grading-sessions', gradingRoutes);
 
+// Public documents — no auth required
+app.get('/api/documents/public', async (c) => {
+  const { results } = await c.env.DB.prepare(
+    `SELECT id, title, category, description, file_url, file_name, version, requires_acknowledgement, created_at
+     FROM documents
+     WHERE is_public = 1
+     ORDER BY category, title`
+  ).all();
+  return c.json(results);
+});
+
+app.use('/api/documents/*', authMiddleware);
+app.route('/api/documents', documentsRoutes);
+
 // Serve sponsor logos (4-level path — must come before shorter routes below)
 app.get('/uploads/sponsor-logos/:sponsorId/:size/:filename', async (c) => {
   const key = `sponsor-logos/${c.req.param('sponsorId')}/${c.req.param('size')}/${c.req.param('filename')}`;
+  const obj = await c.env.UPLOADS.get(key);
+  if (!obj) return c.json({ error: 'Not found' }, 404);
+  const headers = new Headers();
+  obj.writeHttpMetadata(headers);
+  headers.set('etag', obj.httpEtag);
+  return new Response(obj.body, { headers });
+});
+
+// Serve uploaded documents (3-level path — must come before the 2-level route below)
+app.get('/uploads/documents/:docId/:filename', async (c) => {
+  const key = `documents/${c.req.param('docId')}/${c.req.param('filename')}`;
   const obj = await c.env.UPLOADS.get(key);
   if (!obj) return c.json({ error: 'Not found' }, 404);
   const headers = new Headers();

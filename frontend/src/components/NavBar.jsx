@@ -114,6 +114,7 @@ export function NavBar() {
                         <Link to="/players" className="menu-link">Players</Link>
                         <Link to="/users" className="menu-link">Users</Link>
                         <Link to="/sponsors" className="menu-link">Sponsors</Link>
+                        <Link to="/documents" className="menu-link">Documents</Link>
                         <Link to="/email" className="menu-link">Messages</Link>
                         {isAdmin && (
                           <>
@@ -127,6 +128,7 @@ export function NavBar() {
                       <>
                         <p className="menu-section-label">My Club</p>
                         <Link to="/venues" className="menu-link">Venues</Link>
+                        <Link to="/documents" className="menu-link">Documents</Link>
                       </>
                     )}
                   </div>
