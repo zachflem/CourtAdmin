@@ -44,8 +44,28 @@ app.get('/', async (c) => {
        WHEN 'Sunday' THEN 7 ELSE 8 END, start_time`
   ).bind(...venueIds).all();
 
+  const timeslotIds = (timeslots as { id: string }[]).map((s) => s.id);
+  const teamsBySlot = new Map<string, unknown[]>();
+  if (timeslotIds.length > 0) {
+    const { results: assignments } = await c.env.DB.prepare(
+      `SELECT tta.timeslot_id, t.id AS team_id, t.name AS team_name
+       FROM team_timeslot_assignments tta
+       JOIN teams t ON t.id = tta.team_id
+       WHERE tta.timeslot_id IN (${timeslotIds.map(() => '?').join(',')})`
+    ).bind(...timeslotIds).all();
+    for (const a of assignments as { timeslot_id: string }[]) {
+      if (!teamsBySlot.has(a.timeslot_id)) teamsBySlot.set(a.timeslot_id, []);
+      teamsBySlot.get(a.timeslot_id)!.push(a);
+    }
+  }
+
+  const timeslotsWithTeams = (timeslots as { id: string; venue_id: string }[]).map((slot) => ({
+    ...slot,
+    assigned_teams: teamsBySlot.get(slot.id) ?? [],
+  }));
+
   const slotsByVenue = new Map<string, unknown[]>();
-  for (const slot of timeslots as { venue_id: string }[]) {
+  for (const slot of timeslotsWithTeams) {
     if (!slotsByVenue.has(slot.venue_id)) slotsByVenue.set(slot.venue_id, []);
     slotsByVenue.get(slot.venue_id)!.push(slot);
   }

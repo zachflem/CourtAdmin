@@ -851,11 +851,21 @@ function VenueCard({ venue, canEdit, onManage }) {
       </div>
       {venue.timeslots?.length > 0 && (
         <div className="venue-timeslot-list">
-          {venue.timeslots.map((s) => (
-            <span key={s.id} className="timeslot-chip">
-              {s.day_of_week} {formatTime(s.start_time)}–{formatTime(s.end_time)}
-            </span>
-          ))}
+          {venue.timeslots.map((s) => {
+            const teams = s.assigned_teams ?? [];
+            if (teams.length === 0) {
+              return (
+                <span key={s.id} className="timeslot-chip timeslot-chip--unassigned">
+                  {s.day_of_week} {formatTime(s.start_time)}–{formatTime(s.end_time)}
+                </span>
+              );
+            }
+            return teams.map((t) => (
+              <span key={`${s.id}-${t.team_id}`} className="timeslot-chip timeslot-chip--assigned">
+                {s.day_of_week} {formatTime(s.start_time)}–{formatTime(s.end_time)} · {t.team_name}
+              </span>
+            ));
+          })}
         </div>
       )}
       <div className="venue-card-actions">

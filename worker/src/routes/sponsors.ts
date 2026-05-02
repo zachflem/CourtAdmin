@@ -13,7 +13,7 @@ const CONTENT_TYPES: Record<string, string> = {
 };
 const MAX_SIZE = 10 * 1024 * 1024;
 
-const TIERS = ['gold', 'silver', 'bronze', 'general'];
+const TIERS = ['gold', 'silver', 'bronze', 'supporter'];
 const SIZES = ['small', 'medium', 'large'] as const;
 type LogoSize = (typeof SIZES)[number];
 

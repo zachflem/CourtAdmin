@@ -4,8 +4,8 @@ import './SponsorsPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-const TIERS = ['gold', 'silver', 'bronze', 'general'];
-const TIER_LABELS = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze', general: 'General' };
+const TIERS = ['gold', 'silver', 'bronze', 'supporter'];
+const TIER_LABELS = { gold: 'Gold', silver: 'Silver', bronze: 'Bronze', supporter: 'Supporter' };
 const LOGO_SIZES = ['small', 'medium', 'large'];
 const LOGO_SIZE_LABELS = { small: 'Small', medium: 'Medium', large: 'Large' };
 const LOGO_SIZE_HINTS = {
@@ -120,7 +120,7 @@ function LogoSlot({ sponsorId, size, currentUrl, onUpdated }) {
 function CreateSponsorDialog({ onClose, onCreated }) {
   const [form, setForm] = useState({
     name: '',
-    tier: 'general',
+    tier: 'supporter',
     website_url: '',
     contact_name: '',
     contact_email: '',
@@ -374,7 +374,7 @@ function ManageSponsorDialog({ sponsorId, onClose, onUpdated, onDeleted }) {
 function DetailsTab({ sponsor, onUpdated, onDeleted }) {
   const [form, setForm] = useState({
     name: sponsor.name || '',
-    tier: sponsor.tier || 'general',
+    tier: sponsor.tier || 'supporter',
     website_url: sponsor.website_url || '',
     contact_name: sponsor.contact_name || '',
     contact_email: sponsor.contact_email || '',
