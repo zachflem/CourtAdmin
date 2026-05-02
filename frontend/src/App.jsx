@@ -12,6 +12,7 @@ import { ClubSettingsPage } from './pages/ClubSettingsPage';
 import { PlatformPage } from './pages/PlatformPage';
 import { VenuesPage } from './pages/VenuesPage';
 import { SponsorsPage } from './pages/SponsorsPage';
+import { UsersPage } from './pages/UsersPage';
 
 function LoginPage() {
   return (
@@ -86,6 +87,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <SponsorsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute>
+              <UsersPage />
             </ProtectedRoute>
           }
         />

@@ -18,16 +18,38 @@ const USER_SELECT = `
   first_year_registered, is_active, is_approved, roles, created_at, updated_at
 `;
 
-// GET /api/users — full user list (admin/committee)
+// GET /api/users — full user list with positions (admin/committee)
 app.get('/', async (c) => {
   const denied = requireRole(c, ['admin', 'committee']);
   if (denied) return denied;
 
-  const { results } = await c.env.DB.prepare(
-    `SELECT ${USER_SELECT} FROM users ORDER BY last_name, first_name`
-  ).all();
+  const { results } = await c.env.DB.prepare(`
+    SELECT
+      u.id, u.email, u.first_name, u.last_name, u.phone, u.address, u.emergency_contact,
+      u.medical_info, u.gender, u.date_of_birth, u.grading_level, u.age_group,
+      u.jersey_number, u.clearance_required, u.clearance_status,
+      u.previous_club_name, u.previous_team_name, u.previous_coach_name,
+      u.first_year_registered, u.is_active, u.is_approved, u.roles, u.created_at, u.updated_at,
+      COALESCE(GROUP_CONCAT(cp.id || '~' || cp.name, '|'), '') AS positions_raw
+    FROM users u
+    LEFT JOIN user_positions up ON up.user_id = u.id
+    LEFT JOIN club_positions cp ON cp.id = up.position_id
+    GROUP BY u.id
+    ORDER BY u.last_name, u.first_name
+  `).all<Record<string, unknown>>();
 
-  return c.json(results);
+  const users = results.map((u) => ({
+    ...u,
+    positions: u.positions_raw
+      ? String(u.positions_raw).split('|').map((p) => {
+          const tilde = p.indexOf('~');
+          return { id: p.slice(0, tilde), name: p.slice(tilde + 1) };
+        })
+      : [],
+    positions_raw: undefined,
+  }));
+
+  return c.json(users);
 });
 
 // GET /api/users/export — CSV download (admin only)
@@ -287,6 +309,36 @@ app.put('/:id/roles', async (c) => {
   ).bind(JSON.stringify(body.roles), id).run();
 
   return c.json({ id, roles: body.roles });
+});
+
+// PUT /api/users/:id/positions — replace user's positions (admin)
+app.put('/:id/positions', async (c) => {
+  const denied = requireRole(c, ['admin']);
+  if (denied) return denied;
+
+  const { id } = c.req.param();
+  const body = await c.req.json<{ position_ids: string[] }>();
+
+  if (!Array.isArray(body.position_ids)) {
+    return c.json({ error: 'position_ids must be an array' }, 400);
+  }
+
+  const existing = await c.env.DB.prepare('SELECT id FROM users WHERE id = ?')
+    .bind(id).first<{ id: string }>();
+  if (!existing) return c.json({ error: 'User not found' }, 404);
+
+  const stmts = [
+    c.env.DB.prepare('DELETE FROM user_positions WHERE user_id = ?').bind(id),
+    ...body.position_ids.map((posId) =>
+      c.env.DB.prepare(
+        `INSERT INTO user_positions (user_id, position_id) VALUES (?, ?)`
+      ).bind(id, posId)
+    ),
+  ];
+
+  await c.env.DB.batch(stmts);
+
+  return c.json({ id, position_ids: body.position_ids });
 });
 
 // ── Helpers ──────────────────────────────────────────────────────────────────

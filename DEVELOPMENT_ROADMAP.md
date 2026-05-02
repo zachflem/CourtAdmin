@@ -357,7 +357,43 @@ Fields: `id`, `name`, `tier` (gold / silver / bronze / general), `website_url`, 
 
 ---
 
-### 18. Deploy Script
+### 18. Club Positions
+
+D1 tables: `club_positions`, `user_positions` (junction)
+
+`club_positions` fields: `id`, `name`, `display_order`, `created_at`
+
+`user_positions` fields: `user_id`, `position_id`, `assigned_at`
+
+**Endpoints:**
+- `GET /api/club-positions` — list all (admin/committee)
+- `POST /api/club-positions` — create (admin)
+- `PUT /api/club-positions/:id` — rename (admin)
+- `DELETE /api/club-positions/:id` — delete, cascades user_positions (admin)
+- `PUT /api/users/:id/positions` — replace user's position assignments (admin)
+
+**Data:** `GET /api/users` now includes `positions` array (`[{id, name}]`) per user via LEFT JOIN + GROUP_CONCAT.
+
+**UI:**
+- Club Settings page — Positions section: add/remove named positions
+- User Management (UsersPage) — UserDetailsDialog shows Positions checkboxes (admin only)
+- All Users table — Positions column shows assigned position badges
+
+---
+
+### 19. User Management Page + Navigation Restructure
+
+Separated the previously overloaded `/players` page into three focused areas:
+
+- **`/players`** — Players tab (player-role directory) + All Feedback tab
+- **`/users`** (new) — All Users tab (admin only: CSV export/import) + Role Requests tab
+- **`/email` (Messages)** — EOI Inbox tab + Processed EOIs tab added alongside Enquiries/Campaigns/Templates
+
+NavBar updated: "Users" link added for admin/committee, sits alongside "Players" in the Manage section.
+
+---
+
+### 20. Deploy Script
 
 `deploy.sh` prompts for all required credentials and stands up a fresh instance:
 
@@ -621,10 +657,10 @@ Key differences from the original MongoDB design:
 - [x] homepage restructured: Features section removed; About and Contact are now separate sections; /platform page added (sells CourtAdmin platform, uses club colour scheme + logo.png, linked from footer as "Powered by CourtAdmin").
 - [x] add new icon.  favicon.png + logo.png placed in frontend/public/; favicon wired in index.html; logo shown in navbar; document.title updates from club_name via ClubContext.
 - [x] move seasons from a dedicated page, to the Seasons select sidebar of the Teams page.  it makes sense to add and edit seasons from here, rather than having a whole page dedicated to what is a pretty simple function.   We should always float active seasons to the top of the sidebar, and inactive seasons should be in chronological order below a seperator in the sidebar.  Show an edit icon on each season to bring up the edit season modal, and a [+ New Season] button in the sidebar header to add a new season.
-- [ ] expand the existing role based auth to add specific committee role tagging.  some way to identify specific duties within the system.  these should be user defined and configurable on the settings page.  roles like [President] [Treasurer] [Coaching Coordinator] etc.
+- [x] expand the existing role based auth to add specific committee role tagging.  some way to identify specific duties within the system.  these should be user defined and configurable on the settings page.  roles like [President] [Treasurer] [Coaching Coordinator] etc.
 - [ ] investigate intergrated email inbox: Implement a shared inbox by configuring inbound email handling (via Resend webhooks) so emails sent to club@domain.com are ingested into your application as conversations. Store each message with a unique thread ID and allow users to assign conversations to roles (e.g., President, Coaching Coordinator) within your existing permission system. When sending replies, use a clean From address but include a Reply-To with a thread-specific plus address (e.g., club+thread_abc123@domain.com) so incoming replies can be automatically matched back to the correct conversation. Use email headers (Message-ID, In-Reply-To) as a fallback for reliable threading, and persist assignment/state in your database rather than relying solely on email routing.
 - [x] revise the Division mechanic from Phase 8 - currently it's a hard coded list, I want to make it a dynamic list like Age Groups is now.
-- [ ] we've currently got Player Management containing user management, EOIs and feedback.  I think we should move EOIs into the messaging page, this fits a bit better in there.  All users and Role requests should be either their own page.
+- [x] we've currently got Player Management containing user management, EOIs and feedback.  I think we should move EOIs into the messaging page, this fits a bit better in there.  All users and Role requests should be either their own page.
 - [ ] add a grading system.  not to automate the grading process, but to provide a mechanism for grading an age group of players.  Export a PDF with all the players registered for the upcoming season, filter by age and gender, show previous teams and grading levels, and provide space for coaches to make notes and a new grading determination.  once complete, we provide a mechanism for updating the info.  Coaches aren't going to carry around a laptop, it's much more likely to be a clipboard.  So we should cater to that kind of data gathering.
 - [x] the user bulk import didn't send the welcome email, and ignored Jersy #, Date of Birth, Age Group from the CSV.
 - [x] The edit user modal has the heading and subheading (users email) overlapped

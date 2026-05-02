@@ -1,6 +1,5 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useClub } from '../contexts/ClubContext';
 import './PlayersPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -35,6 +34,10 @@ function parseRoles(rolesStr) {
   try { return JSON.parse(rolesStr || '[]'); } catch { return []; }
 }
 
+function RoleBadge({ role }) {
+  return <span className={`role-badge role-badge--${role}`}>{role}</span>;
+}
+
 function StatusBadge({ isActive }) {
   return (
     <span className={`status-badge ${isActive ? 'status-active' : 'status-inactive'}`}>
@@ -43,11 +46,12 @@ function StatusBadge({ isActive }) {
   );
 }
 
-// ─── User Details Dialog ──────────────────────────────────────────────────────
+// ─── User Details Dialog (with positions) ────────────────────────────────────
 
-function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
-  const { settings: clubSettings } = useClub();
-  const ageGroups = clubSettings.age_groups || [];
+function UserDetailsDialog({ user, isAdmin, positions, onClose, onSaved }) {
+  const ageGroups = user._ageGroups || [];
+  const userPositions = Array.isArray(user.positions) ? user.positions : [];
+
   const [form, setForm] = useState({
     first_name:            user.first_name || '',
     last_name:             user.last_name || '',
@@ -69,6 +73,7 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
     is_active:             user.is_active ? '1' : '0',
   });
   const [roles, setRoles] = useState(parseRoles(user.roles));
+  const [selectedPositions, setSelectedPositions] = useState(userPositions.map((p) => p.id));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -79,6 +84,12 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
   function toggleRole(role) {
     setRoles((prev) =>
       prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]
+    );
+  }
+
+  function togglePosition(id) {
+    setSelectedPositions((prev) =>
+      prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]
     );
   }
 
@@ -111,9 +122,11 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
       const [updatedUser] = await Promise.all([
         apiFetch(`/api/users/${user.id}`, { method: 'PUT', body: JSON.stringify(payload) }),
         apiFetch(`/api/users/${user.id}/roles`, { method: 'PUT', body: JSON.stringify({ roles }) }),
+        apiFetch(`/api/users/${user.id}/positions`, { method: 'PUT', body: JSON.stringify({ position_ids: selectedPositions }) }),
       ]);
 
-      onSaved({ ...updatedUser, roles: JSON.stringify(roles) });
+      const updatedPositions = positions.filter((p) => selectedPositions.includes(p.id));
+      onSaved({ ...updatedUser, roles: JSON.stringify(roles), positions: updatedPositions });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -124,10 +137,11 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
   return (
     <div className="dialog-backdrop" onClick={onClose}>
       <div className="dialog dialog--wide dialog--tall" onClick={(e) => e.stopPropagation()}>
-        <h2 className="dialog-title">Edit Player</h2>
+        <h2 className="dialog-title">Edit User</h2>
         <p className="dialog-subtitle">{user.email}</p>
 
         <form onSubmit={handleSave}>
+          {/* Personal */}
           <fieldset className="form-section">
             <legend className="form-section-title">Personal</legend>
             <div className="form-row">
@@ -173,6 +187,7 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
             </label>
           </fieldset>
 
+          {/* Club details */}
           <fieldset className="form-section">
             <legend className="form-section-title">Club Details</legend>
             <div className="form-row">
@@ -200,6 +215,7 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
             </div>
           </fieldset>
 
+          {/* Clearance */}
           <fieldset className="form-section">
             <legend className="form-section-title">Clearance</legend>
             <label className="field-label">
@@ -238,6 +254,7 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
             )}
           </fieldset>
 
+          {/* Roles & Status */}
           <fieldset className="form-section">
             <legend className="form-section-title">Roles &amp; Status</legend>
             <div className="roles-grid">
@@ -262,10 +279,31 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
             </label>
           </fieldset>
 
+          {/* Positions */}
+          {isAdmin && positions.length > 0 && (
+            <fieldset className="form-section">
+              <legend className="form-section-title">Club Positions</legend>
+              <div className="roles-grid">
+                {positions.map((pos) => (
+                  <label key={pos.id} className="role-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedPositions.includes(pos.id)}
+                      onChange={() => togglePosition(pos.id)}
+                    />
+                    <span>{pos.name}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+
           {error && <p className="dialog-error">{error}</p>}
 
           <div className="dialog-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>Cancel</button>
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
             <button type="submit" className="btn btn-primary" disabled={saving}>
               {saving ? 'Saving…' : 'Save Changes'}
             </button>
@@ -276,35 +314,179 @@ function UserDetailsDialog({ user, isAdmin, onClose, onSaved }) {
   );
 }
 
-// ─── Players Tab ──────────────────────────────────────────────────────────────
+// ─── Import Modal ─────────────────────────────────────────────────────────────
 
-function PlayersTab({ users, onEditUser }) {
+function ImportModal({ onClose, onDone }) {
+  const [importFile, setImportFile] = useState(null);
+  const [sendWelcome, setSendWelcome] = useState(true);
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  async function handleSubmit() {
+    if (!importFile) return;
+    setImporting(true);
+    try {
+      const csv = await importFile.text();
+      const result = await apiFetch('/api/users/import', {
+        method: 'POST',
+        body: JSON.stringify({ csv, sendWelcome, customMessage: welcomeMessage }),
+      });
+      onDone(result);
+    } catch (err) {
+      onDone({ error: err.message });
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">Import Users</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <button
+              className="btn btn-ghost btn-sm"
+              onClick={() => fileInputRef.current?.click()}
+              style={{ marginBottom: '6px' }}
+            >
+              Choose CSV file
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              style={{ display: 'none' }}
+              onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+            />
+            {importFile && (
+              <p style={{ margin: 0, fontSize: '0.875rem', color: '#555' }}>{importFile.name}</p>
+            )}
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={sendWelcome}
+              onChange={(e) => setSendWelcome(e.target.checked)}
+            />
+            <span>Send welcome email to newly added users</span>
+          </label>
+          {sendWelcome && (
+            <div className="form-group" style={{ margin: 0 }}>
+              <label className="form-label">Custom message <span style={{ fontWeight: 400, color: '#888' }}>(optional)</span></label>
+              <textarea
+                className="form-input"
+                rows={3}
+                placeholder="e.g. You've been registered for the 2025 season."
+                value={welcomeMessage}
+                onChange={(e) => setWelcomeMessage(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn-ghost" onClick={onClose} disabled={importing}>Cancel</button>
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={!importFile || importing}
+          >
+            {importing ? 'Importing…' : 'Import'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── All Users Tab ────────────────────────────────────────────────────────────
+
+function AllUsersTab({ users, positions, onEditUser, onImportDone }) {
   const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importResult, setImportResult] = useState(null);
 
-  const players = users.filter((u) => parseRoles(u.roles).includes('player'));
-  const filtered = players.filter((u) => {
-    const q = search.toLowerCase();
-    return (
-      fullName(u).toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q) ||
-      (u.age_group || '').toLowerCase().includes(q)
-    );
+  const filtered = users.filter((u) => {
+    const matchesSearch = (() => {
+      if (!search) return true;
+      const q = search.toLowerCase();
+      return fullName(u).toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    })();
+    const matchesRole = !roleFilter || parseRoles(u.roles).includes(roleFilter);
+    return matchesSearch && matchesRole;
   });
+
+  async function handleExport() {
+    const res = await fetch(`${API_BASE}/api/users/export`, { credentials: 'include' });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const date = new Date().toISOString().slice(0, 10);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-${date}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleImportDone(result) {
+    setImportModalOpen(false);
+    setImportResult(result);
+    if (!result.error) onImportDone();
+  }
 
   return (
     <div>
+      {importModalOpen && (
+        <ImportModal
+          onClose={() => setImportModalOpen(false)}
+          onDone={handleImportDone}
+        />
+      )}
+
       <div className="toolbar">
         <input
           className="search-input"
-          placeholder="Search by name, email, or age group…"
+          placeholder="Search by name or email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <span className="toolbar-count">{filtered.length} player{filtered.length !== 1 ? 's' : ''}</span>
+        <select
+          className="filter-select"
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value)}
+        >
+          <option value="">All roles</option>
+          {ALL_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+        </select>
+        <span className="toolbar-count">{filtered.length} user{filtered.length !== 1 ? 's' : ''}</span>
+        <div className="toolbar-actions">
+          <button className="btn btn-ghost btn-sm" onClick={handleExport}>Export CSV</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => setImportModalOpen(true)}>Import CSV</button>
+        </div>
       </div>
 
+      {importResult && (
+        <div className={`import-result ${importResult.error ? 'import-result--error' : 'import-result--success'}`}>
+          {importResult.error ? (
+            <span>Import failed: {importResult.error}</span>
+          ) : (
+            <span>
+              Import complete — {importResult.created} created, {importResult.updated} updated
+              {importResult.emailsSent > 0 && `, ${importResult.emailsSent} welcome email${importResult.emailsSent !== 1 ? 's' : ''} sent`}
+              {importResult.errors?.length > 0 && ` (${importResult.errors.length} row errors)`}
+            </span>
+          )}
+        </div>
+      )}
+
       {filtered.length === 0 ? (
-        <p className="empty-text">{players.length === 0 ? 'No registered players yet.' : 'No players match your search.'}</p>
+        <p className="empty-text">{users.length === 0 ? 'No users found.' : 'No users match your search.'}</p>
       ) : (
         <div className="table-wrapper">
           <table className="processed-table">
@@ -312,9 +494,10 @@ function PlayersTab({ users, onEditUser }) {
               <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Roles</th>
+                <th>Positions</th>
                 <th>Age Group</th>
                 <th>Jersey</th>
-                <th>Grade</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -323,9 +506,25 @@ function PlayersTab({ users, onEditUser }) {
                 <tr key={u.id} className="table-row--clickable" onClick={() => onEditUser(u)}>
                   <td className="td-name">{fullName(u)}</td>
                   <td>{u.email}</td>
+                  <td>
+                    <div className="role-badge-list">
+                      {parseRoles(u.roles).map((r) => <RoleBadge key={r} role={r} />)}
+                      {parseRoles(u.roles).length === 0 && <span className="no-roles">pending</span>}
+                    </div>
+                  </td>
+                  <td>
+                    {Array.isArray(u.positions) && u.positions.length > 0 ? (
+                      <div className="role-badge-list">
+                        {u.positions.map((p) => (
+                          <span key={p.id} className="role-badge role-badge--committee" title={p.name}>
+                            {p.name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : '—'}
+                  </td>
                   <td>{u.age_group || '—'}</td>
                   <td>{u.jersey_number != null ? `#${u.jersey_number}` : '—'}</td>
-                  <td>{u.grading_level != null ? u.grading_level : '—'}</td>
                   <td><StatusBadge isActive={u.is_active} /></td>
                 </tr>
               ))}
@@ -337,132 +536,100 @@ function PlayersTab({ users, onEditUser }) {
   );
 }
 
-// ─── All Feedback Tab ─────────────────────────────────────────────────────────
+// ─── Role Requests Tab ────────────────────────────────────────────────────────
 
-const FB_TYPES = ['technical', 'tactical', 'physical', 'mental', 'general'];
-
-const FB_TYPE_COLORS = {
-  technical: '#1d4ed8',
-  tactical:  '#0369a1',
-  physical:  '#15803d',
-  mental:    '#7c3aed',
-  general:   '#6b7280',
-};
-
-function AllFeedbackTab() {
-  const [feedback, setFeedback] = useState([]);
+function RoleRequestsTab({ onRefresh }) {
+  const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [expanded, setExpanded] = useState(null);
+  const [processing, setProcessing] = useState(null);
 
-  useEffect(() => {
-    apiFetch('/api/feedback')
-      .then(setFeedback)
+  const fetchRequests = useCallback(() => {
+    setLoading(true);
+    apiFetch('/api/role-requests')
+      .then(setRequests)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+
+  async function handleAction(id, status) {
+    setProcessing(id);
+    try {
+      await apiFetch(`/api/role-requests/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status }),
+      });
+      fetchRequests();
+      onRefresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setProcessing(null);
+    }
+  }
+
   if (loading) return <p className="loading-text">Loading…</p>;
   if (error) return <p className="page-error">{error}</p>;
 
-  const q = search.toLowerCase();
-  const filtered = feedback.filter((fb) => {
-    const player = `${fb.player_first_name || ''} ${fb.player_last_name || ''}`.toLowerCase();
-    const coach = `${fb.coach_first_name || ''} ${fb.coach_last_name || ''}`.toLowerCase();
-    const matchSearch = !q || player.includes(q) || coach.includes(q) || fb.title.toLowerCase().includes(q);
-    const matchType = !typeFilter || fb.feedback_type === typeFilter;
-    return matchSearch && matchType;
-  });
-
   return (
-    <div className="all-feedback">
-      <div className="all-feedback-filters">
-        <input
-          className="field-input"
-          style={{ maxWidth: 280 }}
-          placeholder="Search player, coach, or title…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select
-          className="field-input"
-          style={{ maxWidth: 160 }}
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-        >
-          <option value="">All types</option>
-          {FB_TYPES.map((t) => (
-            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-          ))}
-        </select>
-        <span className="all-feedback-count">
-          {filtered.length} of {feedback.length} entries
-        </span>
-      </div>
-
-      {feedback.length === 0 ? (
-        <p className="empty-text">No feedback recorded yet.</p>
-      ) : filtered.length === 0 ? (
-        <p className="empty-text">No feedback matches your filters.</p>
+    <div>
+      {requests.length === 0 ? (
+        <p className="empty-text">No pending role requests.</p>
       ) : (
-        <div className="table-wrapper">
-          <table className="processed-table">
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Age</th>
-                <th>Coach</th>
-                <th>Type</th>
-                <th>Rating</th>
-                <th>Title</th>
-                <th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((fb) => {
-                const color = FB_TYPE_COLORS[fb.feedback_type] || '#6b7280';
-                const isOpen = expanded === fb.id;
-                return (
-                  <>
-                    <tr
-                      key={fb.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => setExpanded(isOpen ? null : fb.id)}
-                    >
-                      <td className="font-medium">
-                        {`${fb.player_first_name || ''} ${fb.player_last_name || ''}`.trim() || '—'}
-                      </td>
-                      <td>{fb.player_age_group || '—'}</td>
-                      <td>{`${fb.coach_first_name || ''} ${fb.coach_last_name || ''}`.trim() || '—'}</td>
-                      <td>
-                        <span style={{
-                          background: `${color}18`, color, fontWeight: 600,
-                          fontSize: '0.72rem', padding: '2px 8px', borderRadius: 999,
-                          textTransform: 'capitalize',
-                        }}>
-                          {fb.feedback_type}
-                        </span>
-                      </td>
-                      <td style={{ color: '#d97706' }}>
-                        {fb.rating != null ? '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating) : '—'}
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{fb.title}</td>
-                      <td style={{ color: '#6b7280', fontSize: '0.82rem' }}>{formatDate(fb.created_at)}</td>
-                    </tr>
-                    {isOpen && (
-                      <tr key={`${fb.id}-expand`}>
-                        <td colSpan={7} style={{ background: '#f9fafb', padding: '0.75rem 1rem', fontSize: '0.875rem', color: '#374151' }}>
-                          {fb.content}
-                        </td>
-                      </tr>
-                    )}
-                  </>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="role-request-list">
+          {requests.map((req) => {
+            const currentRoles = parseRoles(req.current_roles);
+            const requestedRoles = parseRoles(req.requested_roles);
+            const isBusy = processing === req.id;
+            return (
+              <div key={req.id} className="role-request-card">
+                <div className="role-request-header">
+                  <div>
+                    <p className="role-request-name">{req.first_name} {req.last_name}</p>
+                    <p className="role-request-email">{req.email}</p>
+                  </div>
+                  <span className="role-request-date">{formatDate(req.created_at)}</span>
+                </div>
+                <div className="role-request-roles">
+                  <div className="role-request-roles-group">
+                    <span className="role-request-roles-label">Current roles</span>
+                    <div className="role-badge-list">
+                      {currentRoles.length > 0
+                        ? currentRoles.map((r) => <RoleBadge key={r} role={r} />)
+                        : <span className="no-roles">none</span>}
+                    </div>
+                  </div>
+                  <div className="role-request-roles-group">
+                    <span className="role-request-roles-label">Requesting</span>
+                    <div className="role-badge-list">
+                      {requestedRoles.map((r) => <RoleBadge key={r} role={r} />)}
+                    </div>
+                  </div>
+                </div>
+                {req.justification && (
+                  <p className="role-request-justification">"{req.justification}"</p>
+                )}
+                <div className="role-request-actions">
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={isBusy}
+                    onClick={() => handleAction(req.id, 'approved')}
+                  >
+                    {isBusy ? 'Saving…' : 'Approve'}
+                  </button>
+                  <button
+                    className="btn btn-danger btn-sm"
+                    disabled={isBusy}
+                    onClick={() => handleAction(req.id, 'rejected')}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -471,14 +638,16 @@ function AllFeedbackTab() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
-export function PlayersPage() {
+export function UsersPage() {
   const { user } = useAuth();
   const roles = parseRoles(user?.roles);
   const isAdmin = roles.includes('admin');
-  const canEdit = isAdmin || roles.includes('committee');
+  const canAccess = isAdmin || roles.includes('committee');
 
-  const [activeTab, setActiveTab] = useState('players');
+  const [activeTab, setActiveTab] = useState('allusers');
   const [users, setUsers] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [ageGroups, setAgeGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editingUser, setEditingUser] = useState(null);
@@ -486,15 +655,23 @@ export function PlayersPage() {
   const fetchData = useCallback(() => {
     setLoading(true);
     setError('');
-    apiFetch('/api/users')
-      .then(setUsers)
+    Promise.all([
+      apiFetch('/api/users'),
+      apiFetch('/api/club-positions'),
+      apiFetch('/api/club-settings'),
+    ])
+      .then(([usersData, positionsData, settingsData]) => {
+        setUsers(usersData);
+        setPositions(positionsData);
+        setAgeGroups(settingsData.age_groups || []);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  if (!canEdit) {
+  if (!canAccess) {
     return (
       <div className="page-container">
         <p>You don't have permission to view this page.</p>
@@ -502,11 +679,9 @@ export function PlayersPage() {
     );
   }
 
-  const players = users.filter((u) => parseRoles(u.roles).includes('player'));
-
   const tabs = [
-    { key: 'players',  label: `Players (${players.length})` },
-    { key: 'feedback', label: 'All Feedback' },
+    ...(isAdmin ? [{ key: 'allusers', label: `All Users (${users.length})` }] : []),
+    { key: 'rolerequests', label: 'Role Requests' },
   ];
 
   function handleUserSaved(updated) {
@@ -517,7 +692,7 @@ export function PlayersPage() {
   return (
     <div className="players-page">
       <div className="page-header">
-        <h1 className="page-title">Player Management</h1>
+        <h1 className="page-title">User Management</h1>
       </div>
 
       <div className="tab-bar">
@@ -538,14 +713,19 @@ export function PlayersPage() {
         <p className="loading-text">Loading…</p>
       ) : (
         <>
-          {activeTab === 'players' && (
+          {activeTab === 'allusers' && isAdmin && (
             <div className="tab-panel">
-              <PlayersTab users={users} onEditUser={setEditingUser} />
+              <AllUsersTab
+                users={users}
+                positions={positions}
+                onEditUser={(u) => setEditingUser({ ...u, _ageGroups: ageGroups })}
+                onImportDone={fetchData}
+              />
             </div>
           )}
-          {activeTab === 'feedback' && (
+          {activeTab === 'rolerequests' && (
             <div className="tab-panel">
-              <AllFeedbackTab />
+              <RoleRequestsTab onRefresh={fetchData} />
             </div>
           )}
         </>
@@ -555,6 +735,7 @@ export function PlayersPage() {
         <UserDetailsDialog
           user={editingUser}
           isAdmin={isAdmin}
+          positions={positions}
           onClose={() => setEditingUser(null)}
           onSaved={handleUserSaved}
         />

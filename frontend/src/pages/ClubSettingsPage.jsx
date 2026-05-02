@@ -42,6 +42,9 @@ export function ClubSettingsPage() {
   const [newDivision,    setNewDivision]    = useState('');
   const [enquiryTypes,   setEnquiryTypes]   = useState([]);
   const [newEnquiryLabel, setNewEnquiryLabel] = useState('');
+  const [positions,      setPositions]      = useState([]);
+  const [newPosition,    setNewPosition]    = useState('');
+  const [posError,       setPosError]       = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -96,6 +99,12 @@ export function ClubSettingsPage() {
       setEnquiryTypes(settings.contact_enquiry_types);
     }
   }, [settings.contact_enquiry_types]);
+
+  useEffect(() => {
+    apiFetch('/api/club-positions')
+      .then((data) => setPositions(data))
+      .catch(() => {});
+  }, []);
 
   function moveAgeGroup(index, direction) {
     setAgeGroups((prev) => {
@@ -154,6 +163,32 @@ export function ClubSettingsPage() {
     setEnquiryTypes((prev) =>
       prev.map((t, i) => i === index ? { ...t, forward_to: value } : t)
     );
+  }
+
+  async function addPosition() {
+    const name = newPosition.trim();
+    if (!name || positions.some((p) => p.name === name)) return;
+    setPosError('');
+    try {
+      const created = await apiFetch('/api/club-positions', {
+        method: 'POST',
+        body: JSON.stringify({ name }),
+      });
+      setPositions((prev) => [...prev, created]);
+      setNewPosition('');
+    } catch (err) {
+      setPosError(err.message);
+    }
+  }
+
+  async function removePosition(id) {
+    setPosError('');
+    try {
+      await apiFetch(`/api/club-positions/${id}`, { method: 'DELETE' });
+      setPositions((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      setPosError(err.message);
+    }
   }
 
   function set(field, value) {
@@ -504,6 +539,55 @@ export function ClubSettingsPage() {
               className="cs-btn cs-btn-secondary"
               onClick={addDivision}
               disabled={!newDivision.trim() || divisions.includes(newDivision.trim())}
+            >
+              Add
+            </button>
+          </div>
+        </section>
+
+        {/* ── Club Positions ── */}
+        <section className="cs-section">
+          <h2 className="cs-section-title">Club Positions</h2>
+          <p className="cs-section-hint">
+            Named committee and staff positions (e.g. President, Treasurer, Coaching Coordinator).
+            Assign positions to users from the User Management page.
+          </p>
+
+          {posError && <p className="cs-error" style={{ marginBottom: '0.5rem' }}>{posError}</p>}
+
+          {positions.length === 0 && (
+            <p className="cs-age-empty">No positions defined yet.</p>
+          )}
+
+          <ol className="cs-age-list">
+            {positions.map((pos) => (
+              <li key={pos.id} className="cs-age-row">
+                <span className="cs-age-name">{pos.name}</span>
+                <div className="cs-age-actions">
+                  <button
+                    type="button"
+                    className="cs-icon-btn cs-icon-btn--danger"
+                    onClick={() => removePosition(pos.id)}
+                    title="Remove"
+                  >×</button>
+                </div>
+              </li>
+            ))}
+          </ol>
+
+          <div className="cs-age-add">
+            <input
+              className="cs-input cs-age-input"
+              placeholder="New position, e.g. President or Registrar"
+              value={newPosition}
+              onChange={(e) => setNewPosition(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addPosition(); } }}
+            />
+            <button
+              type="button"
+              className="cs-btn cs-btn-secondary"
+              onClick={addPosition}
+              disabled={!newPosition.trim() || positions.some((p) => p.name === newPosition.trim())}
             >
               Add
             </button>
