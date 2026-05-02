@@ -146,6 +146,7 @@ app.get('/:id/teams', async (c) => {
 });
 
 const FEEDBACK_TYPES = ['technical', 'tactical', 'physical', 'mental', 'general'];
+const FEEDBACK_CONTEXTS = ['game', 'grading', 'training', 'other'];
 
 // GET /api/players/:id/feedback — role-based visibility
 // admin/committee/coach/manager: see all; player: own only; parent: children's
@@ -214,6 +215,7 @@ app.post('/:id/feedback', async (c) => {
     title: string;
     content: string;
     feedback_type: string;
+    feedback_context?: string | null;
     rating?: number | null;
   }>();
 
@@ -223,17 +225,20 @@ app.post('/:id/feedback', async (c) => {
   if (!FEEDBACK_TYPES.includes(body.feedback_type)) {
     return c.json({ error: `feedback_type must be one of: ${FEEDBACK_TYPES.join(', ')}` }, 400);
   }
+  if (body.feedback_context != null && !FEEDBACK_CONTEXTS.includes(body.feedback_context)) {
+    return c.json({ error: `feedback_context must be one of: ${FEEDBACK_CONTEXTS.join(', ')}` }, 400);
+  }
   if (body.rating != null && (body.rating < 1 || body.rating > 5)) {
     return c.json({ error: 'rating must be 1–5' }, 400);
   }
 
   const result = await c.env.DB.prepare(`
-    INSERT INTO player_feedback (player_id, coach_id, title, content, feedback_type, rating)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO player_feedback (player_id, coach_id, title, content, feedback_type, feedback_context, rating)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
     RETURNING *
   `).bind(
     playerId, caller.id, body.title.trim(), body.content.trim(),
-    body.feedback_type, body.rating ?? null,
+    body.feedback_type, body.feedback_context ?? null, body.rating ?? null,
   ).first();
 
   return c.json(result, 201);

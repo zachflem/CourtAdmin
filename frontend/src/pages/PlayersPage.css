@@ -748,3 +748,110 @@
 }
 
 .font-medium { font-weight: 600; }
+
+/* ── Grading Sessions tab ────────────────────────────────────────────────── */
+
+.grading-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grading-sessions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.grading-sessions-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Session detail */
+.grading-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.grading-detail-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.grading-detail-title {
+  flex: 1;
+}
+
+.grading-detail-title h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.grading-detail-meta {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.grading-detail-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.grading-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.grading-committed-notice {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  padding: 0.6rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+/* Bulk editor table */
+.grading-table-wrapper {
+  overflow-x: auto;
+}
+
+.grading-table th,
+.grading-table td {
+  white-space: nowrap;
+}
+
+.grading-table .col-notes,
+.grading-table td:last-child {
+  white-space: normal;
+}
+
+.grading-select {
+  min-width: 70px;
+  padding: 4px 6px;
+  font-size: 0.85rem;
+}
+
+.grading-notes-input {
+  width: 100%;
+  min-width: 160px;
+  padding: 4px 6px;
+  font-size: 0.85rem;
+}

@@ -429,15 +429,30 @@ const TYPE_COLORS = {
   general:   '#6b7280',
 };
 
+const CONTEXT_COLORS = {
+  game:     '#0891b2',
+  grading:  '#7c3aed',
+  training: '#15803d',
+  other:    '#6b7280',
+};
+
 function FeedbackCard({ fb, showPlayer = false }) {
   const color = TYPE_COLORS[fb.feedback_type] || '#6b7280';
+  const ctxColor = CONTEXT_COLORS[fb.feedback_context] || '#6b7280';
   return (
     <div className="dp-fb-card">
       <div className="dp-fb-card-header">
         <span className="dp-fb-title">{fb.title}</span>
-        <span className="dp-fb-type" style={{ background: `${color}18`, color }}>
-          {fb.feedback_type}
-        </span>
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          <span className="dp-fb-type" style={{ background: `${color}18`, color }}>
+            {fb.feedback_type}
+          </span>
+          {fb.feedback_context && (
+            <span className="dp-fb-type" style={{ background: `${ctxColor}18`, color: ctxColor }}>
+              {fb.feedback_context}
+            </span>
+          )}
+        </div>
       </div>
       {showPlayer && (
         <div className="dp-fb-player">
@@ -496,6 +511,7 @@ function MyFeedbackTab({ userId }) {
 // ─── Coach Feedback Tab ───────────────────────────────────────────────────────
 
 const FEEDBACK_TYPES = ['technical', 'tactical', 'physical', 'mental', 'general'];
+const FEEDBACK_CONTEXTS = ['game', 'grading', 'training', 'other'];
 
 function CreateFeedbackDialog({ coachId, onClose, onCreated }) {
   const [players, setPlayers] = useState([]);
@@ -504,6 +520,7 @@ function CreateFeedbackDialog({ coachId, onClose, onCreated }) {
     player_id: '',
     title: '',
     feedback_type: 'general',
+    feedback_context: '',
     rating: '',
     content: '',
   });
@@ -535,6 +552,7 @@ function CreateFeedbackDialog({ coachId, onClose, onCreated }) {
           title: form.title.trim(),
           content: form.content.trim(),
           feedback_type: form.feedback_type,
+          feedback_context: form.feedback_context || null,
           rating: form.rating ? Number(form.rating) : null,
         }),
       });
@@ -601,19 +619,33 @@ function CreateFeedbackDialog({ coachId, onClose, onCreated }) {
               </label>
 
               <label className="dp-field-label" style={{ flex: 1 }}>
-                Rating (optional)
+                Context (optional)
                 <select
                   className="dp-input"
-                  value={form.rating}
-                  onChange={(e) => set('rating', e.target.value)}
+                  value={form.feedback_context}
+                  onChange={(e) => set('feedback_context', e.target.value)}
                 >
-                  <option value="">— no rating —</option>
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <option key={n} value={n}>{'★'.repeat(n)} ({n})</option>
+                  <option value="">— none —</option>
+                  {FEEDBACK_CONTEXTS.map((c) => (
+                    <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
                   ))}
                 </select>
               </label>
             </div>
+
+            <label className="dp-field-label">
+              Rating (optional)
+              <select
+                className="dp-input"
+                value={form.rating}
+                onChange={(e) => set('rating', e.target.value)}
+              >
+                <option value="">— no rating —</option>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <option key={n} value={n}>{'★'.repeat(n)} ({n})</option>
+                ))}
+              </select>
+            </label>
 
             <label className="dp-field-label">
               Feedback

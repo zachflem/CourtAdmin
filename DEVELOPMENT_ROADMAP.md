@@ -393,7 +393,39 @@ NavBar updated: "Users" link added for admin/committee, sits alongside "Players"
 
 ---
 
-### 20. Deploy Script
+### 20. Grading System
+
+D1 tables: `grading_sessions`, `grading_session_players`
+
+`grading_sessions` fields: `id`, `season_id`, `name`, `age_group`, `gender` (Male / Female / Mixed), `status` (draft / committed), `notes`, `conducted_by`, `conducted_at`, `created_by`, `created_at`, `updated_at`
+
+`grading_session_players` fields: `id`, `session_id`, `user_id`, `snapshot_name`, `snapshot_dob`, `snapshot_age_group`, `snapshot_gender`, `snapshot_grading_level`, `snapshot_previous_teams` (JSON), `new_grading_level`, `division_recommendation`, `coach_notes`, `entered_by`, `entered_at`
+
+**Player Feedback change:** `feedback_context TEXT` column added to `player_feedback` — values: `game` / `grading` / `training` / `other` (nullable, independent of `feedback_type`)
+
+**Workflow:** Paper-first or fully digital. Admin creates session → system auto-populates matching registered players (snapshotting current grade + previous teams) → bulk table editor for entering coach results → commit applies results: updates each player's `grading_level` profile field and creates a `player_feedback` record with `feedback_context = 'grading'`.
+
+**Endpoints (admin / committee):**
+- `GET /api/grading-sessions` — list with player count
+- `POST /api/grading-sessions` — create + auto-populate players
+- `GET /api/grading-sessions/:id` — detail with players list
+- `PUT /api/grading-sessions/:id` — update metadata
+- `DELETE /api/grading-sessions/:id` — delete draft only
+- `PUT /api/grading-sessions/:id/players` — bulk upsert coach results (auto-saved per row)
+- `POST /api/grading-sessions/:id/commit` — apply: update profiles + create feedback records
+- `GET /api/grading-sessions/:id/print` — printable HTML roster (server-side fallback)
+
+**UI:**
+- Grading Sessions tab on `/players` page (admin / committee)
+- Session list table with create dialog
+- Session detail view: bulk table editor (tablet-friendly, auto-save on blur)
+- Print Roster button → opens `/grading/:id/print` (React print page, landscape A4)
+- Commit Results button → confirmation → locked read-only session
+- `feedback_context` (Game / Grading / Training / Other) added as second dimension on all feedback UI (CreateFeedbackDialog, FeedbackCard, AllFeedbackTab filter)
+
+---
+
+### 21. Deploy Script
 
 `deploy.sh` prompts for all required credentials and stands up a fresh instance:
 
@@ -650,6 +682,28 @@ Key differences from the original MongoDB design:
 
 ---
 
+### Phase 18 — Grading System
+- [x] Migration `0017_grading.sql` — `grading_sessions`, `grading_session_players` tables
+- [x] Migration `0018_feedback_context.sql` — add `feedback_context` column to `player_feedback`
+- [x] `GET /api/grading-sessions` (admin / committee)
+- [x] `POST /api/grading-sessions` — create + auto-populate registered players
+- [x] `GET /api/grading-sessions/:id` — detail with players list
+- [x] `PUT /api/grading-sessions/:id` — update session metadata
+- [x] `DELETE /api/grading-sessions/:id` — draft sessions only
+- [x] `PUT /api/grading-sessions/:id/players` — bulk upsert grading results
+- [x] `POST /api/grading-sessions/:id/commit` — apply: update `users.grading_level` + create `player_feedback` records
+- [x] `GET /api/grading-sessions/:id/print` — server-side printable HTML roster
+- [x] `POST /api/players/:id/feedback` — accepts optional `feedback_context` field
+- [x] Frontend: Grading Sessions tab on `/players` (session list + create dialog)
+- [x] Frontend: Session detail bulk editor (tablet-friendly, auto-save per row on blur)
+- [x] Frontend: Commit Results confirmation dialog
+- [x] Frontend: `/grading/:id/print` — React print page (A4 landscape, print CSS)
+- [x] Frontend: `feedback_context` (Game / Grading / Training / Other) added to `CreateFeedbackDialog`
+- [x] Frontend: context badge added to `FeedbackCard` and `AllFeedbackTab` (with context filter)
+- [x] `DEVELOPMENT_ROADMAP.md` updated
+
+---
+
 ### Bugs & Fixes
 - [x] rename frontend app - match 'Club Name', defaults to 'CourtAdmin' if the name isn't set.
 - [x] about and contact are homepage sections (id="about" / id="contact"); navbar links to anchors; content managed via existing Club Settings fields.
@@ -661,7 +715,7 @@ Key differences from the original MongoDB design:
 - [ ] investigate intergrated email inbox: Implement a shared inbox by configuring inbound email handling (via Resend webhooks) so emails sent to club@domain.com are ingested into your application as conversations. Store each message with a unique thread ID and allow users to assign conversations to roles (e.g., President, Coaching Coordinator) within your existing permission system. When sending replies, use a clean From address but include a Reply-To with a thread-specific plus address (e.g., club+thread_abc123@domain.com) so incoming replies can be automatically matched back to the correct conversation. Use email headers (Message-ID, In-Reply-To) as a fallback for reliable threading, and persist assignment/state in your database rather than relying solely on email routing.
 - [x] revise the Division mechanic from Phase 8 - currently it's a hard coded list, I want to make it a dynamic list like Age Groups is now.
 - [x] we've currently got Player Management containing user management, EOIs and feedback.  I think we should move EOIs into the messaging page, this fits a bit better in there.  All users and Role requests should be either their own page.
-- [ ] add a grading system.  not to automate the grading process, but to provide a mechanism for grading an age group of players.  Export a PDF with all the players registered for the upcoming season, filter by age and gender, show previous teams and grading levels, and provide space for coaches to make notes and a new grading determination.  once complete, we provide a mechanism for updating the info.  Coaches aren't going to carry around a laptop, it's much more likely to be a clipboard.  So we should cater to that kind of data gathering.
+- [x] add a grading system.  not to automate the grading process, but to provide a mechanism for grading an age group of players.  Export a PDF with all the players registered for the upcoming season, filter by age and gender, show previous teams and grading levels, and provide space for coaches to make notes and a new grading determination.  once complete, we provide a mechanism for updating the info.  Coaches aren't going to carry around a laptop, it's much more likely to be a clipboard.  So we should cater to that kind of data gathering.
 - [x] the user bulk import didn't send the welcome email, and ignored Jersy #, Date of Birth, Age Group from the CSV.
 - [x] The edit user modal has the heading and subheading (users email) overlapped
 - [x] investigate any way to speed up the loading process?  there is a flash of the default colours that pops up as the page loads

@@ -19,6 +19,7 @@ import contactMessagesRoutes from './routes/contactMessages';
 import venuesRoutes from './routes/venues';
 import sponsorsRoutes from './routes/sponsors';
 import positionsRoutes from './routes/positions';
+import gradingRoutes from './routes/grading';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -65,6 +66,7 @@ app.get('/api/sponsors/public', async (c) => {
 
 app.route('/api/sponsors', sponsorsRoutes);
 app.route('/api/club-positions', positionsRoutes);
+app.route('/api/grading-sessions', gradingRoutes);
 
 // Serve sponsor logos (4-level path — must come before shorter routes below)
 app.get('/uploads/sponsor-logos/:sponsorId/:size/:filename', async (c) => {

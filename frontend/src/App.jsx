@@ -13,6 +13,7 @@ import { PlatformPage } from './pages/PlatformPage';
 import { VenuesPage } from './pages/VenuesPage';
 import { SponsorsPage } from './pages/SponsorsPage';
 import { UsersPage } from './pages/UsersPage';
+import { GradingPrintPage } from './pages/GradingPrintPage';
 
 function LoginPage() {
   return (
@@ -103,6 +104,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute roles={['admin']}>
               <ClubSettingsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/grading/:id/print"
+          element={
+            <ProtectedRoute>
+              <GradingPrintPage />
             </ProtectedRoute>
           }
         />
