@@ -626,3 +626,65 @@
   width: 110px;
   flex-shrink: 0;
 }
+
+/* ── Play day badge (team card) ─────────────────────────────────────────── */
+
+.team-playday-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  white-space: nowrap;
+}
+
+/* ── Training slot suggestions (team card) ──────────────────────────────── */
+
+.team-training-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.team-training-label {
+  font-size: 0.75rem;
+  color: #d97706;
+  font-weight: 600;
+  margin: 0;
+}
+
+.team-suggestion-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.suggestion-pill {
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff7ed;
+  color: #92400e;
+  border: 1px solid #fed7aa;
+  white-space: nowrap;
+}
+
+.suggestion-pill--more {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.team-no-training {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Play day select in manage dialog ───────────────────────────────────── */
+
+.manage-playday-select {
+  width: 120px;
+  flex-shrink: 0;
+}

@@ -9,7 +9,8 @@ const TEAM_WITH_COUNTS = `
   SELECT t.*, s.name AS season_name,
     (SELECT COUNT(*) FROM team_players WHERE team_id = t.id) AS player_count,
     (SELECT COUNT(*) FROM team_coaches  WHERE team_id = t.id) AS coach_count,
-    (SELECT COUNT(*) FROM team_managers WHERE team_id = t.id) AS manager_count
+    (SELECT COUNT(*) FROM team_managers WHERE team_id = t.id) AS manager_count,
+    (SELECT COUNT(*) FROM team_timeslot_assignments WHERE team_id = t.id) AS training_count
   FROM teams t
   LEFT JOIN seasons s ON s.id = t.season_id
 `;
@@ -112,6 +113,7 @@ app.post('/', async (c) => {
     season_id: string;
     age_group: string;
     division?: string;
+    play_day?: string | null;
   }>();
 
   const { name, season_id, age_group } = body;
@@ -125,9 +127,9 @@ app.post('/', async (c) => {
   if (!season) return c.json({ error: 'Season not found' }, 404);
 
   const team = await c.env.DB.prepare(
-    `INSERT INTO teams (name, season_id, age_group, division) VALUES (?, ?, ?, ?) RETURNING *`
+    `INSERT INTO teams (name, season_id, age_group, division, play_day) VALUES (?, ?, ?, ?, ?) RETURNING *`
   )
-    .bind(name, season_id, age_group, body.division ?? null)
+    .bind(name, season_id, age_group, body.division ?? null, body.play_day ?? null)
     .first();
 
   return c.json(team, 201);
@@ -149,6 +151,7 @@ app.put('/:id', async (c) => {
     name?: string;
     age_group?: string;
     division?: string | null;
+    play_day?: string | null;
     add_players?: string[];
     remove_players?: string[];
     add_coaches?: string[];
@@ -166,6 +169,7 @@ app.put('/:id', async (c) => {
   if (body.name !== undefined) fieldUpdates.push(['name', body.name]);
   if (body.age_group !== undefined) fieldUpdates.push(['age_group', body.age_group]);
   if (body.division !== undefined) fieldUpdates.push(['division', body.division ?? null]);
+  if (body.play_day !== undefined) fieldUpdates.push(['play_day', body.play_day ?? null]);
 
   if (fieldUpdates.length > 0) {
     const setClauses = fieldUpdates.map(([k]) => `${k} = ?`).join(', ');

@@ -78,6 +78,27 @@ app.get('/', async (c) => {
   );
 });
 
+// GET /api/venues/available-timeslots — unassigned timeslots across all venues
+app.get('/available-timeslots', async (c) => {
+  const denied = requireRole(c, ['admin', 'committee', 'coach', 'manager']);
+  if (denied) return denied;
+
+  const { results } = await c.env.DB.prepare(
+    `SELECT vt.id, vt.venue_id, vt.day_of_week, vt.start_time, vt.end_time, vt.court_name,
+            v.name AS venue_name, v.address AS venue_address
+     FROM venue_timeslots vt
+     JOIN venues v ON v.id = vt.venue_id
+     WHERE vt.id NOT IN (SELECT timeslot_id FROM team_timeslot_assignments)
+     ORDER BY v.name, vt.court_name,
+       CASE vt.day_of_week
+         WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
+         WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
+         WHEN 'Sunday' THEN 7 ELSE 8 END, vt.start_time`
+  ).all();
+
+  return c.json(results);
+});
+
 // GET /api/venues/:id — full venue detail
 app.get('/:id', async (c) => {
   const denied = requireRole(c, ['admin', 'committee', 'coach', 'manager']);

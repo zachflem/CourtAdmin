@@ -452,6 +452,89 @@ Steps:
 
 ---
 
+### 22. Team Schedule & Play Day
+
+Addition to the existing `teams` table and team card UI.
+
+- `play_day` column added to `teams` — day of week the team's association games are played (e.g. "Thursday")
+- Displayed as a badge on the team card
+- Editable in the Create / Edit Team dialog (day-of-week dropdown)
+- Training schedule already derived from `venue_timeslots` + `team_timeslot_assignments` (built in Phase 16) — surfaced more prominently on the team card
+- When a team has **no training timeslot assigned**, the team card shows available (unassigned) timeslots across all venues as suggestion pills — prompting admin/committee to assign one, or giving coaches/managers visibility to request one via internal messaging
+
+---
+
+### 23. Document Management
+
+D1 tables: `documents`, `document_acknowledgements`
+
+`documents` fields: `id`, `title`, `category`, `description`, `file_url`, `file_name`, `requires_acknowledgement` (bool), `is_public` (bool), `version`, `created_by`, `created_at`, `updated_at`
+
+`document_acknowledgements` fields: `id`, `document_id`, `user_id`, `acknowledged_at`
+
+**Endpoints:**
+- `GET /api/documents/public` — public; no auth; returns `is_public = true` docs
+- `GET /api/documents` — authenticated; admin/committee see all; members see member-visible docs
+- `POST /api/documents` — upload file to R2 + create record (admin / committee)
+- `PUT /api/documents/:id` — update metadata, optionally replace file (admin / committee)
+- `DELETE /api/documents/:id` — delete record + R2 cleanup (admin / committee)
+- `POST /api/documents/:id/acknowledge` — authenticated user records acknowledgement
+- `GET /api/documents/:id/acknowledgements` — who has / hasn't acknowledged (admin / committee)
+
+**UI:**
+- `/documents` page — admin/committee management view (upload, edit, delete, view acknowledgement status)
+- Member view: document list with "I have read and acknowledge" button on required docs
+- Acknowledgement status table per document: who has signed, who hasn't
+
+---
+
+### 24. Notification Badges & Toasts
+
+No new D1 tables — badge counts derived from existing data.
+
+**New endpoint:**
+- `GET /api/notifications/summary` — returns counts of pending items: `pending_eois`, `pending_role_requests`, `unread_messages`, `pending_acknowledgements`
+
+**UI:**
+- Numeric badge overlays on relevant nav items (e.g. EOI count on Messages link, role requests count on Users link)
+- Single non-blocking toast on page load (once per session via `sessionStorage`): summarises any count > 0
+- Toast is dismissible, appears in top-right corner, does not auto-redirect
+- No polling — summary endpoint called once on authenticated page load
+
+---
+
+### 25. Internal Messaging
+
+Direct threaded messaging between club members — primarily for coaches/managers to contact committee members by role or position (e.g. "Venue Coordinator", "Coaching Coordinator").
+
+D1 tables: `message_threads`, `message_thread_members`, `messages`, `message_thread_reads`
+
+`message_threads` fields: `id`, `subject`, `created_by`, `created_at`
+
+`message_thread_members` fields: `thread_id`, `user_id` — participants expanded from role/position at thread creation time
+
+`messages` fields: `id`, `thread_id`, `sender_id`, `body`, `created_at`
+
+`message_thread_reads` fields: `thread_id`, `user_id`, `last_read_at`
+
+**Recipient addressing:** when composing, sender selects recipients by individual user, role (e.g. `committee`), or club position (e.g. "Venue Coordinator"). System resolves to a list of matching user IDs and stores them in `message_thread_members`. New users who later acquire the role/position do not auto-join existing threads.
+
+**Endpoints:**
+- `GET /api/messages/threads` — threads the current user is a member of, with unread count
+- `POST /api/messages/threads` — create thread (subject + body + recipient list, resolved server-side)
+- `GET /api/messages/threads/:id` — full thread with all messages
+- `POST /api/messages/threads/:id` — reply to thread
+- `PUT /api/messages/threads/:id/read` — mark thread read (updates `message_thread_reads`)
+- `GET /api/messages/unread-count` — total unread thread count for current user (used by notification badge)
+
+**UI:**
+- Inbox tab on the Messages page — thread list, unread highlighted, click to open thread view
+- Compose dialog: subject, recipient picker (search by name / filter by role or position), message body
+- Thread view: message history + reply box
+- Unread count badge on Messages nav link (feeds into the Phase 21 notification summary)
+
+---
+
 ## Stubs / Deferred Features
 
 | Feature | Status in original | Plan |
@@ -704,6 +787,61 @@ Key differences from the original MongoDB design:
 
 ---
 
+### Phase 19 — Team Schedule & Play Day
+- [x] Migration — add `play_day` column to `teams`
+- [x] `PUT /api/teams/:id` — accept and persist `play_day`
+- [x] `GET /api/teams` — include `play_day` and `training_count` in response
+- [x] `GET /api/venues/available-timeslots` — returns unassigned timeslots across all venues (admin / committee / coach / manager)
+- [x] Frontend: Create / Edit Team dialog — day-of-week dropdown for play day
+- [x] Frontend: Team card — show play day badge alongside age group and division
+- [x] Frontend: Team card — when no training timeslot is assigned, show available unassigned slots as suggestion pills
+- [x] `DEVELOPMENT_ROADMAP.md` updated
+
+---
+
+### Phase 20 — Document Management
+- [ ] Migration — `documents` + `document_acknowledgements` tables
+- [ ] `GET /api/documents/public` (no auth)
+- [ ] `GET /api/documents` (authenticated; role-scoped visibility)
+- [ ] `POST /api/documents` — R2 upload + record create (admin / committee)
+- [ ] `PUT /api/documents/:id` — update metadata / replace file (admin / committee)
+- [ ] `DELETE /api/documents/:id` — record + R2 cleanup (admin / committee)
+- [ ] `POST /api/documents/:id/acknowledge` (authenticated user)
+- [ ] `GET /api/documents/:id/acknowledgements` (admin / committee)
+- [ ] R2 serving route: `/uploads/documents/:docId/:filename`
+- [ ] Frontend: `/documents` page — admin/committee management view (upload, edit, delete)
+- [ ] Frontend: member document list with acknowledge button on required docs
+- [ ] Frontend: acknowledgement status table per document (admin/committee)
+- [ ] NavBar: Documents link for appropriate roles
+- [ ] `DEVELOPMENT_ROADMAP.md` updated
+
+---
+
+### Phase 21 — Notification Badges & Toasts
+- [ ] `GET /api/notifications/summary` — returns counts: pending EOIs, pending role requests, unread contact messages, pending document acknowledgements
+- [ ] Frontend: badge overlays on relevant nav items (role-aware — only show counts relevant to the current user's roles)
+- [ ] Frontend: session toast on authenticated page load — summarises non-zero counts, dismissible, non-blocking
+- [ ] `sessionStorage` flag to suppress toast after first dismiss within a session
+- [ ] `DEVELOPMENT_ROADMAP.md` updated
+
+---
+
+### Phase 22 — Internal Messaging
+- [ ] Migration — `message_threads`, `message_thread_members`, `messages`, `message_thread_reads` tables
+- [ ] `GET /api/messages/threads` — thread list with unread count per thread
+- [ ] `POST /api/messages/threads` — create thread; resolve role/position recipients to user IDs server-side
+- [ ] `GET /api/messages/threads/:id` — full thread with messages
+- [ ] `POST /api/messages/threads/:id` — reply
+- [ ] `PUT /api/messages/threads/:id/read` — mark read
+- [ ] `GET /api/messages/unread-count` — total unread for current user (used by notification badge)
+- [ ] Frontend: Inbox tab on Messages page — thread list, unread highlighting
+- [ ] Frontend: Compose dialog — subject, recipient picker (by name / role / position), body
+- [ ] Frontend: Thread view — message history + reply box
+- [ ] Frontend: unread badge wired to Messages nav link; feeds into notification summary
+- [ ] `DEVELOPMENT_ROADMAP.md` updated
+
+---
+
 ### Bugs & Fixes
 - [x] rename frontend app - match 'Club Name', defaults to 'CourtAdmin' if the name isn't set.
 - [x] about and contact are homepage sections (id="about" / id="contact"); navbar links to anchors; content managed via existing Club Settings fields.
@@ -712,7 +850,6 @@ Key differences from the original MongoDB design:
 - [x] add new icon.  favicon.png + logo.png placed in frontend/public/; favicon wired in index.html; logo shown in navbar; document.title updates from club_name via ClubContext.
 - [x] move seasons from a dedicated page, to the Seasons select sidebar of the Teams page.  it makes sense to add and edit seasons from here, rather than having a whole page dedicated to what is a pretty simple function.   We should always float active seasons to the top of the sidebar, and inactive seasons should be in chronological order below a seperator in the sidebar.  Show an edit icon on each season to bring up the edit season modal, and a [+ New Season] button in the sidebar header to add a new season.
 - [x] expand the existing role based auth to add specific committee role tagging.  some way to identify specific duties within the system.  these should be user defined and configurable on the settings page.  roles like [President] [Treasurer] [Coaching Coordinator] etc.
-- [ ] investigate intergrated email inbox: Implement a shared inbox by configuring inbound email handling (via Resend webhooks) so emails sent to club@domain.com are ingested into your application as conversations. Store each message with a unique thread ID and allow users to assign conversations to roles (e.g., President, Coaching Coordinator) within your existing permission system. When sending replies, use a clean From address but include a Reply-To with a thread-specific plus address (e.g., club+thread_abc123@domain.com) so incoming replies can be automatically matched back to the correct conversation. Use email headers (Message-ID, In-Reply-To) as a fallback for reliable threading, and persist assignment/state in your database rather than relying solely on email routing.
 - [x] revise the Division mechanic from Phase 8 - currently it's a hard coded list, I want to make it a dynamic list like Age Groups is now.
 - [x] we've currently got Player Management containing user management, EOIs and feedback.  I think we should move EOIs into the messaging page, this fits a bit better in there.  All users and Role requests should be either their own page.
 - [x] add a grading system.  not to automate the grading process, but to provide a mechanism for grading an age group of players.  Export a PDF with all the players registered for the upcoming season, filter by age and gender, show previous teams and grading levels, and provide space for coaches to make notes and a new grading determination.  once complete, we provide a mechanism for updating the info.  Coaches aren't going to carry around a laptop, it's much more likely to be a clipboard.  So we should cater to that kind of data gathering.
@@ -724,4 +861,4 @@ Key differences from the original MongoDB design:
 - [x] the venues page lines up all the venues vertically.  this might be fine on mobile, but we should use more of the screen realestate on desktop.
 - [x] on the venues page, we list the available slots on the card, but only show the number of teams as a summary.  let's show: timeslots without teams assigned as an orange pill (because we want to warn that a booked slot isn't utilised) and timeslots with teams assigned as a green pill, and show the team name in the pill as well.  Stack timeslots vertically on the venue card.
 - [ ] investigate adding an instagram carousel to the homepage.  set the url and grab the last N posts
-
+- [ ] investigate intergrated email inbox: Implement a shared inbox by configuring inbound email handling (via Resend webhooks) so emails sent to club@domain.com are ingested into your application as conversations. Store each message with a unique thread ID and allow users to assign conversations to roles (e.g., President, Coaching Coordinator) within your existing permission system. When sending replies, use a clean From address but include a Reply-To with a thread-specific plus address (e.g., club+thread_abc123@domain.com) so incoming replies can be automatically matched back to the correct conversation. Use email headers (Message-ID, In-Reply-To) as a fallback for reliable threading, and persist assignment/state in your database rather than relying solely on email routing.

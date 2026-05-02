@@ -174,6 +174,8 @@ function SeasonDialog({ season, onClose, onSaved }) {
   );
 }
 
+const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 // ─── Create Team Dialog ───────────────────────────────────────────────────────
 
 function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) {
@@ -185,6 +187,7 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
     season_id: preselectedSeasonId || (seasons[0]?.id ?? ''),
     age_group: ageGroups[0] ?? '',
     division: divisions[0] ?? '',
+    play_day: '',
   });
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -271,6 +274,21 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
               </select>
             </label>
           </div>
+
+          <label className="field-label">
+            Game Day
+            <span className="field-hint">Day of week association games are played (optional)</span>
+            <select
+              className="field-input"
+              value={form.play_day}
+              onChange={(e) => set('play_day', e.target.value)}
+            >
+              <option value="">— Not set —</option>
+              {DAYS_OF_WEEK.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
+          </label>
 
           {error && <p className="dialog-error">{error}</p>}
 
@@ -386,6 +404,7 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
   const [editName, setEditName] = useState(initialTeam.name);
   const [editAgeGroup, setEditAgeGroup] = useState(initialTeam.age_group);
   const [editDivision, setEditDivision] = useState(initialTeam.division ?? divisions[0] ?? '');
+  const [editPlayDay, setEditPlayDay] = useState(initialTeam.play_day ?? '');
   const [savingMeta, setSavingMeta] = useState(false);
   const [metaError, setMetaError] = useState('');
   const [removing, setRemoving] = useState(null);
@@ -397,13 +416,23 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
   }, [initialTeam.id]);
 
   async function saveMeta() {
-    if (editName === team.name && editAgeGroup === team.age_group && editDivision === (team.division ?? divisions[0] ?? '')) return;
+    if (
+      editName === team.name &&
+      editAgeGroup === team.age_group &&
+      editDivision === (team.division ?? divisions[0] ?? '') &&
+      editPlayDay === (team.play_day ?? '')
+    ) return;
     setMetaError('');
     setSavingMeta(true);
     try {
       const updated = await apiFetch(`/api/teams/${team.id}`, {
         method: 'PUT',
-        body: JSON.stringify({ name: editName, age_group: editAgeGroup, division: editDivision }),
+        body: JSON.stringify({
+          name: editName,
+          age_group: editAgeGroup,
+          division: editDivision,
+          play_day: editPlayDay || null,
+        }),
       });
       setTeam((t) => ({ ...t, ...updated }));
       onUpdated(updated);
@@ -478,6 +507,18 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
                 <option key={d} value={d}>{d}</option>
               ))}
             </select>
+            <select
+              className="field-input manage-playday-select"
+              value={editPlayDay}
+              onChange={(e) => setEditPlayDay(e.target.value)}
+              onBlur={saveMeta}
+              title="Game day"
+            >
+              <option value="">Game day…</option>
+              {DAYS_OF_WEEK.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
             {savingMeta && <span className="meta-saving">Saving…</span>}
           </div>
           {metaError && <p className="dialog-error">{metaError}</p>}
@@ -538,12 +579,25 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
 
 // ─── Team Card ────────────────────────────────────────────────────────────────
 
-function TeamCard({ team, onManage }) {
+function formatTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hour = parseInt(h, 10);
+  const ampm = hour >= 12 ? 'pm' : 'am';
+  const h12 = hour % 12 || 12;
+  return `${h12}:${m}${ampm}`;
+}
+
+function TeamCard({ team, availableTimeslots, onManage }) {
+  const hasTraining = (team.training_count ?? 0) > 0;
+  const suggestions = !hasTraining ? (availableTimeslots ?? []).slice(0, 4) : [];
+
   return (
     <div className="team-card">
       <div className="team-card-header">
         <span className="team-age-badge">{team.age_group}</span>
         {team.division && <span className="team-division-badge">{team.division}</span>}
+        {team.play_day && <span className="team-playday-badge">{team.play_day}</span>}
         <h3 className="team-name">{team.name}</h3>
       </div>
       <div className="team-counts">
@@ -551,6 +605,28 @@ function TeamCard({ team, onManage }) {
         <span>Coaches: <strong>{team.coach_count}</strong></span>
         <span>Managers: <strong>{team.manager_count}</strong></span>
       </div>
+
+      {!hasTraining && suggestions.length > 0 && (
+        <div className="team-training-suggestions">
+          <p className="team-training-label">No training slot assigned — available slots:</p>
+          <div className="team-suggestion-pills">
+            {suggestions.map((slot) => (
+              <span key={slot.id} className="suggestion-pill">
+                {slot.venue_name}{slot.court_name ? ` · ${slot.court_name}` : ''} · {slot.day_of_week} {formatTime(slot.start_time)}
+              </span>
+            ))}
+            {(availableTimeslots ?? []).length > 4 && (
+              <span className="suggestion-pill suggestion-pill--more">
+                +{(availableTimeslots ?? []).length - 4} more
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+      {!hasTraining && suggestions.length === 0 && (availableTimeslots ?? []).length === 0 && (
+        <p className="team-no-training">No training slot assigned</p>
+      )}
+
       <div className="team-card-actions">
         <button className="btn btn-ghost btn-sm" onClick={() => onManage(team)}>
           Manage
@@ -571,6 +647,7 @@ export function TeamsPage() {
   const [selectedSeasonId, setSelectedSeasonId] = useState(null);
   const [teams, setTeams] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [availableTimeslots, setAvailableTimeslots] = useState([]);
   const [loadingSeasons, setLoadingSeasons] = useState(true);
   const [loadingTeams, setLoadingTeams] = useState(false);
   const [error, setError] = useState('');
@@ -579,15 +656,17 @@ export function TeamsPage() {
   const [showCreateSeason, setShowCreateSeason] = useState(false);
   const [editSeason, setEditSeason] = useState(null);
 
-  // Load seasons + users once
+  // Load seasons + users + available timeslots once
   useEffect(() => {
     Promise.all([
       apiFetch('/api/seasons'),
       apiFetch('/api/users'),
+      apiFetch('/api/venues/available-timeslots'),
     ])
-      .then(([s, u]) => {
+      .then(([s, u, slots]) => {
         setSeasons(s);
         setAllUsers(u);
+        setAvailableTimeslots(slots);
         // Prefer the first active season, fall back to first overall
         const preferred = s.find((x) => x.is_active) || s[0];
         if (preferred) setSelectedSeasonId(preferred.id);
@@ -743,6 +822,7 @@ export function TeamsPage() {
               <TeamCard
                 key={team.id}
                 team={team}
+                availableTimeslots={availableTimeslots}
                 onManage={setManagingTeam}
               />
             ))}
