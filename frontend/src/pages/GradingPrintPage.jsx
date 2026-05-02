@@ -54,9 +54,11 @@ export function GradingPrintPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: Arial, sans-serif; font-size: 11px; background: #fff; color: #000; }
         .gp-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #000; }
-        .gp-header-left h1 { font-size: 15px; font-weight: bold; }
-        .gp-header-left h2 { font-size: 12px; font-weight: normal; margin-top: 3px; color: #444; }
-        .gp-header-left .gp-club { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
+        .gp-header-left { display: flex; align-items: flex-start; gap: 12px; }
+        .gp-logo { width: 56px; height: 56px; object-fit: contain; flex-shrink: 0; }
+        .gp-header-text h1 { font-size: 15px; font-weight: bold; }
+        .gp-header-text h2 { font-size: 12px; font-weight: normal; margin-top: 3px; color: #444; }
+        .gp-header-text .gp-club { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
         .gp-meta { font-size: 10px; color: #666; margin-top: 3px; }
         .gp-print-btn { padding: 6px 14px; background: #2563eb; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; white-space: nowrap; }
         table { width: 100%; border-collapse: collapse; }
@@ -84,6 +86,10 @@ export function GradingPrintPage() {
       <div style={{ padding: '16px 20px', maxWidth: '100%' }}>
         <div className="gp-header">
           <div className="gp-header-left">
+            {settings.logo_url && (
+              <img src={settings.logo_url} alt="" className="gp-logo" />
+            )}
+            <div className="gp-header-text">
             <div className="gp-club">{settings.club_name || 'CourtAdmin'}</div>
             <h1>{session.name}</h1>
             <h2>
@@ -93,6 +99,7 @@ export function GradingPrintPage() {
               {session.season_name ? ` · ${session.season_name}` : ''}
             </h2>
             <div className="gp-meta">{players.length} player{players.length !== 1 ? 's' : ''} listed</div>
+            </div>
           </div>
           <button className="gp-print-btn" onClick={() => window.print()}>
             Print this page
