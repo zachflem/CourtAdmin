@@ -107,14 +107,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/grading/:id/print"
-          element={
-            <ProtectedRoute>
-              <GradingPrintPage />
-            </ProtectedRoute>
-          }
-        />
       </Routes>
     </>
   );
@@ -125,7 +117,17 @@ export default function App() {
     <BrowserRouter>
       <ClubProvider>
         <AuthProvider>
-          <AppRoutes />
+          <Routes>
+            <Route
+              path="/grading/:id/print"
+              element={
+                <ProtectedRoute>
+                  <GradingPrintPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/*" element={<AppRoutes />} />
+          </Routes>
         </AuthProvider>
       </ClubProvider>
     </BrowserRouter>
