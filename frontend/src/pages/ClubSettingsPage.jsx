@@ -45,9 +45,16 @@ export function ClubSettingsPage() {
   const [positions,      setPositions]      = useState([]);
   const [newPosition,    setNewPosition]    = useState('');
   const [posError,       setPosError]       = useState('');
+  const [activeTab, setActiveTab] = useState('branding');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  const TABS = [
+    { key: 'branding',   label: 'Branding' },
+    { key: 'contact',    label: 'Contact' },
+    { key: 'clubconfig', label: 'Club Config' },
+  ];
 
   // Sync form from context when text/color fields change (not image URLs)
   useEffect(() => {
@@ -255,7 +262,23 @@ export function ClubSettingsPage() {
         <h1 className="cs-page-title">Club Settings</h1>
       </div>
 
+      <div className="tab-bar">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            className={`tab-btn${activeTab === t.key ? ' tab-btn--active' : ''}`}
+            onClick={() => setActiveTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={handleSave} className="cs-form">
+
+        {/* ── Branding tab ── */}
+        {activeTab === 'branding' && <>
 
         {/* ── Club Identity ── */}
         <section className="cs-section">
@@ -336,6 +359,11 @@ export function ClubSettingsPage() {
             </label>
           </div>
         </section>
+
+        </>}
+
+        {/* ── Contact tab ── */}
+        {activeTab === 'contact' && <>
 
         {/* ── Contact Information ── */}
         <section className="cs-section">
@@ -423,6 +451,11 @@ export function ClubSettingsPage() {
             />
           </label>
         </section>
+
+        </>}
+
+        {/* ── Club Config tab ── */}
+        {activeTab === 'clubconfig' && <>
 
         {/* ── Age Groups ── */}
         <section className="cs-section">
@@ -594,8 +627,9 @@ export function ClubSettingsPage() {
           </div>
         </section>
 
-        {/* ── Enquiry Types ── */}
-        <section className="cs-section">
+        </>}
+
+        {activeTab === 'contact' && <section className="cs-section">
           <h2 className="cs-section-title">Contact Enquiry Types</h2>
           <p className="cs-section-hint">
             Enquiry types shown on the public contact form. Set a forwarding email per type —
@@ -642,7 +676,7 @@ export function ClubSettingsPage() {
               Add
             </button>
           </div>
-        </section>
+        </section>}
 
         {error && <p className="cs-error">{error}</p>}
         {success && <p className="cs-success">{success}</p>}
@@ -655,7 +689,7 @@ export function ClubSettingsPage() {
       </form>
 
       {/* ── Images (each upload saves immediately via its own endpoint) ── */}
-      <section className="cs-section">
+      {activeTab === 'branding' && <section className="cs-section">
         <h2 className="cs-section-title">Images</h2>
         <p className="cs-section-hint">Uploads save immediately.</p>
 
@@ -687,7 +721,7 @@ export function ClubSettingsPage() {
             />
           </div>
         </div>
-      </section>
+      </section>}
     </div>
   );
 }
