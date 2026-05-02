@@ -38,7 +38,7 @@ app.get('/', async (c) => {
 
   const { results: timeslots } = await c.env.DB.prepare(
     `SELECT * FROM venue_timeslots WHERE venue_id IN (${venueIds.map(() => '?').join(',')})
-     ORDER BY CASE day_of_week
+     ORDER BY court_name, CASE day_of_week
        WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
        WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
        WHEN 'Sunday' THEN 7 ELSE 8 END, start_time`
@@ -92,7 +92,7 @@ app.get('/:id', async (c) => {
       `SELECT vt.*,
          (SELECT COUNT(*) FROM team_timeslot_assignments WHERE timeslot_id = vt.id) AS team_count
        FROM venue_timeslots vt WHERE vt.venue_id = ?
-       ORDER BY CASE day_of_week
+       ORDER BY vt.court_name, CASE day_of_week
          WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
          WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
          WHEN 'Sunday' THEN 7 ELSE 8 END, start_time`
@@ -259,6 +259,7 @@ app.post('/:id/timeslots', async (c) => {
     day_of_week: string;
     start_time: string;
     end_time: string;
+    court_name?: string;
   }>();
 
   const VALID_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -270,10 +271,10 @@ app.post('/:id/timeslots', async (c) => {
   }
 
   const slot = await c.env.DB.prepare(
-    `INSERT INTO venue_timeslots (venue_id, day_of_week, start_time, end_time)
-     VALUES (?, ?, ?, ?) RETURNING *`
+    `INSERT INTO venue_timeslots (venue_id, day_of_week, start_time, end_time, court_name)
+     VALUES (?, ?, ?, ?, ?) RETURNING *`
   )
-    .bind(id, body.day_of_week, body.start_time, body.end_time)
+    .bind(id, body.day_of_week, body.start_time, body.end_time, body.court_name?.trim() ?? '')
     .first();
 
   return c.json(slot, 201);

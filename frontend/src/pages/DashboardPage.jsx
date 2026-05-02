@@ -337,7 +337,7 @@ function StaffTeamsTab({ userId, staffType, emptyLabel }) {
               <div className="dp-training-slots">
                 {team.training.map((s, i) => (
                   <span key={i} className="dp-training-slot">
-                    {s.day_of_week} {formatTime12(s.start_time)}–{formatTime12(s.end_time)}
+                    {s.day_of_week} {formatTime12(s.start_time)}–{formatTime12(s.end_time)}{s.court_name ? ` · ${s.court_name}` : ''}
                   </span>
                 ))}
               </div>

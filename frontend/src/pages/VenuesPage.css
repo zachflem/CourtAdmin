@@ -424,6 +424,40 @@
   color: #6b7280;
 }
 
+.timeslot-court {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.court-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.court-group + .court-group {
+  margin-top: 0.75rem;
+}
+
+.court-group-header {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+  padding: 0 0.25rem;
+}
+
+.field-optional {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 0.8em;
+}
+
 .timeslot-teams {
   display: flex;
   flex-wrap: wrap;

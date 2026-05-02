@@ -427,7 +427,7 @@ function DetailRow({ label, value, pre }) {
 
 function TimeslotsTab({ venue, canEdit, allTeams, onReload }) {
   const [showAdd, setShowAdd] = useState(false);
-  const [newSlot, setNewSlot] = useState({ day_of_week: 'Monday', start_time: '18:00', end_time: '19:30' });
+  const [newSlot, setNewSlot] = useState({ day_of_week: 'Monday', start_time: '18:00', end_time: '19:30', court_name: '' });
   const [addError, setAddError] = useState('');
   const [adding, setAdding] = useState(false);
 
@@ -441,7 +441,7 @@ function TimeslotsTab({ venue, canEdit, allTeams, onReload }) {
         body: JSON.stringify(newSlot),
       });
       setShowAdd(false);
-      setNewSlot({ day_of_week: 'Monday', start_time: '18:00', end_time: '19:30' });
+      setNewSlot({ day_of_week: 'Monday', start_time: '18:00', end_time: '19:30', court_name: '' });
       onReload();
     } catch (err) {
       setAddError(err.message);
@@ -457,25 +457,51 @@ function TimeslotsTab({ venue, canEdit, allTeams, onReload }) {
     } catch { /* ignore */ }
   }
 
+  // Group timeslots by court_name; empty string = no specific court
+  const slots = venue.timeslots ?? [];
+  const hasCourtNames = slots.some((s) => s.court_name);
+  const groups = hasCourtNames
+    ? [...new Set(slots.map((s) => s.court_name))].map((court) => ({
+        court,
+        slots: slots.filter((s) => s.court_name === court),
+      }))
+    : [{ court: null, slots }];
+
   return (
     <div className="tab-section">
-      {venue.timeslots?.length === 0 && (
+      {slots.length === 0 && (
         <p className="empty-text">No timeslots yet.</p>
       )}
-      {venue.timeslots?.map((slot) => (
-        <TimeslotRow
-          key={slot.id}
-          slot={slot}
-          canEdit={canEdit}
-          allTeams={allTeams}
-          onRemove={() => handleRemoveSlot(slot.id)}
-          onReload={onReload}
-        />
+
+      {groups.map(({ court, slots: groupSlots }) => (
+        <div key={court ?? '__all'} className="court-group">
+          {court && <div className="court-group-header">{court}</div>}
+          {groupSlots.map((slot) => (
+            <TimeslotRow
+              key={slot.id}
+              slot={slot}
+              canEdit={canEdit}
+              allTeams={allTeams}
+              onRemove={() => handleRemoveSlot(slot.id)}
+              onReload={onReload}
+            />
+          ))}
+        </div>
       ))}
 
       {canEdit && (
         showAdd ? (
           <form onSubmit={handleAddSlot} className="add-slot-form">
+            <label className="field-label">
+              Court name / number <span className="field-optional">(optional)</span>
+              <input
+                className="field-input"
+                type="text"
+                value={newSlot.court_name}
+                onChange={(e) => setNewSlot((s) => ({ ...s, court_name: e.target.value }))}
+                placeholder="e.g. Court 1, Main Court"
+              />
+            </label>
             <div className="field-row">
               <label className="field-label">
                 Day
@@ -559,6 +585,7 @@ function TimeslotRow({ slot, canEdit, allTeams, onRemove, onReload }) {
       <div className="timeslot-info">
         <span className="timeslot-day">{slot.day_of_week}</span>
         <span className="timeslot-time">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</span>
+        {slot.court_name && <span className="timeslot-court">{slot.court_name}</span>}
       </div>
       <div className="timeslot-teams">
         {(slot.assigned_teams ?? []).map((t) => (
@@ -853,16 +880,17 @@ function VenueCard({ venue, canEdit, onManage }) {
         <div className="venue-timeslot-list">
           {venue.timeslots.map((s) => {
             const teams = s.assigned_teams ?? [];
+            const slotLabel = `${s.day_of_week} ${formatTime(s.start_time)}–${formatTime(s.end_time)}${s.court_name ? ` · ${s.court_name}` : ''}`;
             if (teams.length === 0) {
               return (
                 <span key={s.id} className="timeslot-chip timeslot-chip--unassigned">
-                  {s.day_of_week} {formatTime(s.start_time)}–{formatTime(s.end_time)}
+                  {slotLabel}
                 </span>
               );
             }
             return teams.map((t) => (
               <span key={`${s.id}-${t.team_id}`} className="timeslot-chip timeslot-chip--assigned">
-                {s.day_of_week} {formatTime(s.start_time)}–{formatTime(s.end_time)} · {t.team_name}
+                {slotLabel} · {t.team_name}
               </span>
             ));
           })}

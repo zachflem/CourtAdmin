@@ -630,7 +630,7 @@ Key differences from the original MongoDB design:
 - [x] The edit user modal has the heading and subheading (users email) overlapped
 - [ ] investigate any way to speed up the loading process?  there is a flash of the default colours that pops up as the page loads
 - [x] rename the 'General' tier of sponser to "Supporter" across the platform
-- [ ] venues might have more than one court available.  timeslots should include the court name/number.  group timeslots by name/number when listing.
+- [x] venues might have more than one court available.  timeslots should include the court name/number.  group timeslots by name/number when listing.
 - [x] the venues page lines up all the venues vertically.  this might be fine on mobile, but we should use more of the screen realestate on desktop.
 - [x] on the venues page, we list the available slots on the card, but only show the number of teams as a summary.  let's show: timeslots without teams assigned as an orange pill (because we want to warn that a booked slot isn't utilised) and timeslots with teams assigned as a green pill, and show the team name in the pill as well.  Stack timeslots vertically on the venue card.
 - [ ] investigate adding an instagram carousel to the homepage.  set the url and grab the last N posts

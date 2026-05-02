@@ -20,13 +20,13 @@ const TEAM_FIELDS = `
 async function attachTraining(db: D1Database, teams: { id: string }[]): Promise<unknown[]> {
   if (teams.length === 0) return teams;
   const { results: slots } = await db.prepare(
-    `SELECT tta.team_id, vt.day_of_week, vt.start_time, vt.end_time,
+    `SELECT tta.team_id, vt.day_of_week, vt.start_time, vt.end_time, vt.court_name,
             v.name AS venue_name, v.address AS venue_address
      FROM team_timeslot_assignments tta
      JOIN venue_timeslots vt ON vt.id = tta.timeslot_id
      JOIN venues v ON v.id = vt.venue_id
      WHERE tta.team_id IN (${teams.map(() => '?').join(',')})
-     ORDER BY CASE vt.day_of_week
+     ORDER BY vt.court_name, CASE vt.day_of_week
        WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2 WHEN 'Wednesday' THEN 3
        WHEN 'Thursday' THEN 4 WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
        WHEN 'Sunday' THEN 7 ELSE 8 END, vt.start_time`
