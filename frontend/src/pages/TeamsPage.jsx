@@ -1,12 +1,11 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useClub } from '../contexts/ClubContext';
 import './TeamsPage.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function fullName(u) {
   return [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email;
@@ -25,7 +24,157 @@ async function apiFetch(path, opts = {}) {
   return res.json();
 }
 
-// ─── Create Team Dialog ──────────────────────────────────────────────────────
+function PencilIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
+// ─── Season Dialog ────────────────────────────────────────────────────────────
+
+const EMPTY_SEASON_FORM = {
+  name: '', start_date: '', end_date: '', age_cutoff_date: '',
+  eoi_start_date: '', eoi_end_date: '', is_active: true, is_closed: false,
+};
+
+function SeasonDialog({ season, onClose, onSaved }) {
+  const isEdit = Boolean(season);
+  const [form, setForm] = useState(
+    isEdit ? {
+      name: season.name,
+      start_date: season.start_date.slice(0, 10),
+      end_date: season.end_date.slice(0, 10),
+      age_cutoff_date: season.age_cutoff_date ? season.age_cutoff_date.slice(0, 10) : '',
+      eoi_start_date: season.eoi_start_date ? season.eoi_start_date.slice(0, 10) : '',
+      eoi_end_date: season.eoi_end_date ? season.eoi_end_date.slice(0, 10) : '',
+      is_active: Boolean(season.is_active),
+      is_closed: Boolean(season.is_closed),
+    } : EMPTY_SEASON_FORM
+  );
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  function set(field, value) {
+    setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      const url = isEdit ? `${API_BASE}/api/seasons/${season.id}` : `${API_BASE}/api/seasons`;
+      const res = await fetch(url, {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          ...form,
+          eoi_start_date: form.eoi_start_date || null,
+          eoi_end_date: form.eoi_end_date || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `Request failed (${res.status})`);
+      }
+      onSaved(await res.json(), isEdit);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="dialog-backdrop" onClick={onClose}>
+      <div className="dialog" onClick={(e) => e.stopPropagation()}>
+        <h2 className="dialog-title">{isEdit ? 'Edit Season' : 'Create Season'}</h2>
+        <form onSubmit={handleSubmit} className="dialog-form">
+          <label className="field-label">
+            Season Name
+            <input
+              className="field-input"
+              type="text"
+              value={form.name}
+              onChange={(e) => set('name', e.target.value)}
+              required
+              placeholder="e.g. 2025 Winter"
+              autoFocus
+            />
+          </label>
+
+          <div className="field-row">
+            <label className="field-label">
+              Start Date
+              <input className="field-input" type="date" value={form.start_date}
+                onChange={(e) => set('start_date', e.target.value)} required />
+            </label>
+            <label className="field-label">
+              End Date
+              <input className="field-input" type="date" value={form.end_date}
+                onChange={(e) => set('end_date', e.target.value)} required />
+            </label>
+          </div>
+
+          <label className="field-label">
+            Age Cutoff Date
+            <span className="field-hint">Players' ages are calculated as of this date</span>
+            <input className="field-input" type="date" value={form.age_cutoff_date}
+              onChange={(e) => set('age_cutoff_date', e.target.value)} />
+          </label>
+
+          <div className="field-row">
+            <label className="field-label">
+              EOI Open Date
+              <span className="field-hint">When registrations open (optional)</span>
+              <input className="field-input" type="date" value={form.eoi_start_date}
+                onChange={(e) => set('eoi_start_date', e.target.value)} />
+            </label>
+            <label className="field-label">
+              EOI Close Date
+              <span className="field-hint">When registrations close (optional)</span>
+              <input className="field-input" type="date" value={form.eoi_end_date}
+                onChange={(e) => set('eoi_end_date', e.target.value)} />
+            </label>
+          </div>
+
+          {isEdit && (
+            <div className="season-status-toggles">
+              <label className="season-toggle-label">
+                <input type="checkbox" checked={form.is_active}
+                  onChange={(e) => set('is_active', e.target.checked)} />
+                Active season
+              </label>
+              <label className="season-toggle-label">
+                <input type="checkbox" checked={form.is_closed}
+                  onChange={(e) => set('is_closed', e.target.checked)} />
+                Closed to new registrations
+              </label>
+            </div>
+          )}
+
+          {error && <p className="dialog-error">{error}</p>}
+
+          <div className="dialog-actions">
+            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={saving}>
+              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Season'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── Create Team Dialog ───────────────────────────────────────────────────────
 
 function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) {
   const { settings: clubSettings } = useClub();
@@ -139,11 +288,11 @@ function CreateTeamDialog({ seasons, preselectedSeasonId, onClose, onCreated }) 
   );
 }
 
-// ─── Member Tab ──────────────────────────────────────────────────────────────
+// ─── Member Tab ───────────────────────────────────────────────────────────────
 
 function MemberTab({ members, allUsers, onAdd, onRemove, removing }) {
   const [search, setSearch] = useState('');
-  const [adding, setAdding] = useState(null); // userId being added
+  const [adding, setAdding] = useState(null);
 
   const memberIds = new Set(members.map((m) => m.id));
 
@@ -226,7 +375,7 @@ function MemberTab({ members, allUsers, onAdd, onRemove, removing }) {
   );
 }
 
-// ─── Team Management Dialog ──────────────────────────────────────────────────
+// ─── Team Management Dialog ───────────────────────────────────────────────────
 
 function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated }) {
   const { settings: clubSettings } = useClub();
@@ -241,7 +390,6 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
   const [metaError, setMetaError] = useState('');
   const [removing, setRemoving] = useState(null);
 
-  // Fetch full team (with member arrays) on open
   useEffect(() => {
     apiFetch(`/api/teams/${initialTeam.id}`)
       .then(setTeam)
@@ -272,7 +420,6 @@ function TeamManagementDialog({ team: initialTeam, allUsers, onClose, onUpdated 
       method: 'PUT',
       body: JSON.stringify({ [key]: [userId] }),
     });
-    // Re-fetch full member lists
     const full = await apiFetch(`/api/teams/${team.id}`);
     setTeam(full);
     onUpdated(updated);
@@ -429,6 +576,8 @@ export function TeamsPage() {
   const [error, setError] = useState('');
   const [showCreate, setShowCreate] = useState(false);
   const [managingTeam, setManagingTeam] = useState(null);
+  const [showCreateSeason, setShowCreateSeason] = useState(false);
+  const [editSeason, setEditSeason] = useState(null);
 
   // Load seasons + users once
   useEffect(() => {
@@ -439,35 +588,54 @@ export function TeamsPage() {
       .then(([s, u]) => {
         setSeasons(s);
         setAllUsers(u);
-        if (s.length > 0) setSelectedSeasonId(s[0].id);
+        // Prefer the first active season, fall back to first overall
+        const preferred = s.find((x) => x.is_active) || s[0];
+        if (preferred) setSelectedSeasonId(preferred.id);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoadingSeasons(false));
   }, []);
 
+  // Active seasons newest-first; inactive seasons chronologically
+  const { activeSeasons, inactiveSeasons } = useMemo(() => ({
+    activeSeasons: seasons
+      .filter((s) => s.is_active)
+      .sort((a, b) => b.start_date.localeCompare(a.start_date)),
+    inactiveSeasons: seasons
+      .filter((s) => !s.is_active)
+      .sort((a, b) => a.start_date.localeCompare(b.start_date)),
+  }), [seasons]);
+
   // Load teams for selected season
-  const fetchTeams = useCallback(
-    (seasonId) => {
-      if (!seasonId) return;
-      setLoadingTeams(true);
-      apiFetch(`/api/teams?season_id=${seasonId}`)
-        .then(setTeams)
-        .catch((err) => setError(err.message))
-        .finally(() => setLoadingTeams(false));
-    },
-    []
-  );
+  const fetchTeams = useCallback((seasonId) => {
+    if (!seasonId) return;
+    setLoadingTeams(true);
+    apiFetch(`/api/teams?season_id=${seasonId}`)
+      .then(setTeams)
+      .catch((err) => setError(err.message))
+      .finally(() => setLoadingTeams(false));
+  }, []);
 
   useEffect(() => {
     if (selectedSeasonId) fetchTeams(selectedSeasonId);
   }, [selectedSeasonId, fetchTeams]);
+
+  function handleSeasonSaved(saved, isEdit) {
+    if (isEdit) {
+      setSeasons((prev) => prev.map((s) => (s.id === saved.id ? saved : s)));
+    } else {
+      setSeasons((prev) => [saved, ...prev]);
+      setSelectedSeasonId(saved.id);
+    }
+    setShowCreateSeason(false);
+    setEditSeason(null);
+  }
 
   function handleCreated(team) {
     setShowCreate(false);
     if (team.season_id === selectedSeasonId) {
       setTeams((prev) => [...prev, team]);
     } else {
-      // Switch to the season the team was created in
       setSelectedSeasonId(team.season_id);
     }
   }
@@ -489,31 +657,53 @@ export function TeamsPage() {
   const selectedSeason = seasons.find((s) => s.id === selectedSeasonId);
   const teamsForSeason = teams.filter((t) => t.season_id === selectedSeasonId);
 
+  function SeasonListItem({ s }) {
+    const isSelected = s.id === selectedSeasonId;
+    return (
+      <li>
+        <div className={`season-item ${isSelected ? 'season-item--active' : ''}`}>
+          <button className="season-item-body" onClick={() => setSelectedSeasonId(s.id)}>
+            <span className="season-item-name">{s.name}</span>
+            <span className={`season-status ${s.is_active ? 'season-status--active' : 'season-status--inactive'}`}>
+              {s.is_active ? (s.is_closed ? 'Closed' : 'Active') : 'Inactive'}
+            </span>
+          </button>
+          <button
+            className="season-edit-btn"
+            onClick={() => setEditSeason(s)}
+            title="Edit season"
+          >
+            <PencilIcon />
+          </button>
+        </div>
+      </li>
+    );
+  }
+
   return (
     <div className="teams-layout">
       {/* Season Sidebar */}
       <aside className="season-sidebar">
-        <p className="sidebar-heading">Seasons</p>
+        <div className="sidebar-header">
+          <p className="sidebar-heading">Seasons</p>
+          <button className="sidebar-new-btn" onClick={() => setShowCreateSeason(true)}>
+            + New
+          </button>
+        </div>
         {loadingSeasons ? (
           <p className="loading-text">Loading…</p>
         ) : seasons.length === 0 ? (
           <p className="sidebar-empty">No seasons yet.</p>
         ) : (
           <ul className="season-list">
-            {seasons.map((s) => (
-              <li key={s.id}>
-                <button
-                  className={`season-item ${s.id === selectedSeasonId ? 'season-item--active' : ''}`}
-                  onClick={() => setSelectedSeasonId(s.id)}
-                >
-                  <span className="season-item-name">{s.name}</span>
-                  {s.is_active ? (
-                    <span className="season-status season-status--active">Active</span>
-                  ) : (
-                    <span className="season-status season-status--inactive">Inactive</span>
-                  )}
-                </button>
-              </li>
+            {activeSeasons.map((s) => (
+              <SeasonListItem key={s.id} s={s} />
+            ))}
+            {activeSeasons.length > 0 && inactiveSeasons.length > 0 && (
+              <li className="season-separator" aria-hidden="true" />
+            )}
+            {inactiveSeasons.map((s) => (
+              <SeasonListItem key={s.id} s={s} />
             ))}
           </ul>
         )}
@@ -576,6 +766,22 @@ export function TeamsPage() {
           allUsers={allUsers}
           onClose={() => setManagingTeam(null)}
           onUpdated={handleUpdated}
+        />
+      )}
+
+      {showCreateSeason && (
+        <SeasonDialog
+          season={null}
+          onClose={() => setShowCreateSeason(false)}
+          onSaved={handleSeasonSaved}
+        />
+      )}
+
+      {editSeason && (
+        <SeasonDialog
+          season={editSeason}
+          onClose={() => setEditSeason(null)}
+          onSaved={handleSeasonSaved}
         />
       )}
     </div>

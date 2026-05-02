@@ -109,7 +109,6 @@ export function NavBar() {
                     {isStaff && (
                       <>
                         <p className="menu-section-label">Manage</p>
-                        <Link to="/seasons" className="menu-link">Seasons</Link>
                         <Link to="/teams" className="menu-link">Teams</Link>
                         <Link to="/venues" className="menu-link">Venues</Link>
                         <Link to="/players" className="menu-link">Players</Link>

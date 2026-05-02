@@ -59,8 +59,16 @@ const ClubContext = createContext({ settings: DEFAULT_SETTINGS, setSettings: () 
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
+function getInitialSettings() {
+  try {
+    const t = JSON.parse(localStorage.getItem('ca_theme') || 'null');
+    if (t) return { ...DEFAULT_SETTINGS, primary_color: t.p, secondary_color: t.s, accent_color: t.a };
+  } catch (e) {}
+  return DEFAULT_SETTINGS;
+}
+
 export function ClubProvider({ children }) {
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(getInitialSettings);
 
   useEffect(() => {
     fetch(`${API_BASE}/api/club-settings`)
@@ -72,8 +80,18 @@ export function ClubProvider({ children }) {
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--primary', settings.primary_color);
+    root.style.setProperty('--color-primary', settings.primary_color);
     root.style.setProperty('--secondary', settings.secondary_color);
+    root.style.setProperty('--color-secondary', settings.secondary_color);
     root.style.setProperty('--accent', settings.accent_color);
+    root.style.setProperty('--color-accent', settings.accent_color);
+    try {
+      localStorage.setItem('ca_theme', JSON.stringify({
+        p: settings.primary_color,
+        s: settings.secondary_color,
+        a: settings.accent_color,
+      }));
+    } catch (e) {}
   }, [settings.primary_color, settings.secondary_color, settings.accent_color]);
 
   useEffect(() => {
