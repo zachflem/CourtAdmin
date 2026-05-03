@@ -131,15 +131,19 @@
 
 /* ─── Shared field primitives ───────────────────────────── */
 .field-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
+  display: block;
   font-size: 0.88rem;
   font-weight: 600;
   color: #374151;
 }
 
+.field-label > .field-input {
+  margin-top: 0.35rem;
+}
+
 .field-hint {
+  display: block;
+  margin-top: 0.15rem;
   font-weight: 400;
   font-size: 0.78rem;
   color: #9ca3af;

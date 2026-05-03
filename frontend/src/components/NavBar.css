@@ -103,29 +103,14 @@
   font-size: 1.0625rem;
 }
 
-/* ── Hamburger button ────────────────────────────────────────── */
+/* ── Manage button ───────────────────────────────────────────── */
 
 .hamburger-wrap {
   position: relative;
 }
 
-.hamburger-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 6px;
-  border: none;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-
-.hamburger-btn:hover {
-  background: rgba(255, 255, 255, 0.22);
+.manage-btn {
+  position: relative;
 }
 
 /* ── Dropdown menu ───────────────────────────────────────────── */
@@ -203,18 +188,14 @@
   opacity: 0.8;
 }
 
-/* ── Notification badge on hamburger ─────────────────────────── */
-
-.hamburger-btn {
-  position: relative;
-}
+/* ── Notification dot on Manage button ───────────────────────── */
 
 .hamburger-dot {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 8px;
-  height: 8px;
+  top: -4px;
+  right: -4px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: #ef4444;
   border: 2px solid var(--primary, #1e40af);

@@ -4,7 +4,6 @@ import './EOIFormDialog.css';
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'];
-const GRADING_LEVELS = [1, 2, 3, 4, 5];
 const EXPERIENCE_OPTIONS = ['No experience', '1–2 years', '3–5 years', '5+ years'];
 
 function calculateAge(dob) {
@@ -25,7 +24,6 @@ const EMPTY = {
   phone: '',
   date_of_birth: '',
   gender: '',
-  grading_level: '',
   experience_level: '',
   season_interest: '',
   emergency_contact_name: '',
@@ -69,7 +67,6 @@ export function EOIFormDialog({ onClose }) {
     try {
       const payload = {
         ...form,
-        grading_level: Number(form.grading_level),
         // Strip parent fields when submitter is not a minor
         parent_guardian_name: isMinor ? form.parent_guardian_name : undefined,
         parent_guardian_email: isMinor ? form.parent_guardian_email : undefined,
@@ -214,41 +211,22 @@ export function EOIFormDialog({ onClose }) {
           <section className="eoi-section">
             <h3 className="eoi-section-title">Playing Details</h3>
 
-            <div className="field-row">
-              <label className="field-label">
-                Grading Level <span className="req">*</span>
-                <span className="field-hint">1 = beginner, 5 = elite</span>
-                <select
-                  className="field-input"
-                  value={form.grading_level}
-                  onChange={(e) => set('grading_level', e.target.value)}
-                  required
-                >
-                  <option value="">Select…</option>
-                  {GRADING_LEVELS.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field-label">
-                Experience Level <span className="req">*</span>
-                <select
-                  className="field-input"
-                  value={form.experience_level}
-                  onChange={(e) => set('experience_level', e.target.value)}
-                  required
-                >
-                  <option value="">Select…</option>
-                  {EXPERIENCE_OPTIONS.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            <label className="field-label">
+              Experience Level <span className="req">*</span>
+              <select
+                className="field-input"
+                value={form.experience_level}
+                onChange={(e) => set('experience_level', e.target.value)}
+                required
+              >
+                <option value="">Select…</option>
+                {EXPERIENCE_OPTIONS.map((o) => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             <label className="field-label">
               Season Interest <span className="req">*</span>

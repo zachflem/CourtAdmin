@@ -5,34 +5,6 @@ import { useClub } from '../contexts/ClubContext';
 import { useNotifications } from '../contexts/NotificationsContext';
 import './NavBar.css';
 
-function HamburgerIcon({ open }) {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 22 22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      {open ? (
-        <>
-          <line x1="4" y1="4" x2="18" y2="18" />
-          <line x1="18" y1="4" x2="4" y2="18" />
-        </>
-      ) : (
-        <>
-          <line x1="3" y1="6" x2="19" y2="6" />
-          <line x1="3" y1="11" x2="19" y2="11" />
-          <line x1="3" y1="16" x2="19" y2="16" />
-        </>
-      )}
-    </svg>
-  );
-}
-
 function NotifBadge({ count }) {
   if (!count) return null;
   return <span className="notif-badge">{count > 99 ? '99+' : count}</span>;
@@ -108,12 +80,12 @@ export function NavBar() {
             {hasMenu && (
               <div className="hamburger-wrap" ref={menuRef}>
                 <button
-                  className="hamburger-btn"
+                  className="btn btn-primary btn-sm manage-btn"
                   onClick={() => setMenuOpen((o) => !o)}
                   aria-label={menuOpen ? 'Close menu' : 'Open menu'}
                   aria-expanded={menuOpen}
                 >
-                  <HamburgerIcon open={menuOpen} />
+                  Manage
                   {counts.total > 0 && !menuOpen && (
                     <span className="hamburger-dot" aria-hidden="true" />
                   )}
@@ -123,19 +95,20 @@ export function NavBar() {
                   <div className="hamburger-menu">
                     {isStaff && (
                       <>
-                        <p className="menu-section-label">Manage</p>
-                        <Link to="/teams" className="menu-link">Teams</Link>
-                        <Link to="/venues" className="menu-link">Venues</Link>
-                        <Link to="/players" className="menu-link">Players</Link>
-                        <Link to="/users" className="menu-link menu-link--badged">
-                          Users <NotifBadge count={usersCount} />
+                        <Link to="/email" className="menu-link menu-link--badged">
+                          Messages <NotifBadge count={messagesCount} />
                         </Link>
+                        <div className="menu-divider" />
+                        <Link to="/players" className="menu-link">Players</Link>
+                        <Link to="/teams" className="menu-link">Teams</Link>
+                        <div className="menu-divider" />
+                        <Link to="/venues" className="menu-link">Venues</Link>
                         <Link to="/sponsors" className="menu-link">Sponsors</Link>
                         <Link to="/documents" className="menu-link menu-link--badged">
                           Documents <NotifBadge count={docsCount} />
                         </Link>
-                        <Link to="/email" className="menu-link menu-link--badged">
-                          Messages <NotifBadge count={messagesCount} />
+                        <Link to="/users" className="menu-link menu-link--badged">
+                          Users <NotifBadge count={usersCount} />
                         </Link>
                         {isAdmin && (
                           <>
@@ -147,7 +120,6 @@ export function NavBar() {
                     )}
                     {!isStaff && isCoachOrManager && (
                       <>
-                        <p className="menu-section-label">My Club</p>
                         <Link to="/venues" className="menu-link">Venues</Link>
                         <Link to="/documents" className="menu-link menu-link--badged">
                           Documents <NotifBadge count={docsCount} />
