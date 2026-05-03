@@ -79,7 +79,7 @@
   font-size: 0.9375rem;
   text-decoration: none;
   cursor: pointer;
-  border: none;
+  border: 2px solid var(--accent, #f59e0b);
   transition: opacity 0.15s, transform 0.1s;
 }
 
