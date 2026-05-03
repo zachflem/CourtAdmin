@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ClubProvider } from './contexts/ClubContext';
+import { NotificationsProvider } from './contexts/NotificationsContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { NavBar } from './components/NavBar';
+import { NotificationToast } from './components/NotificationToast';
 import { HomePage } from './pages/HomePage';
 import { TeamsPage } from './pages/TeamsPage';
 import { PlayersPage } from './pages/PlayersPage';
@@ -39,6 +41,7 @@ function AppRoutes() {
   return (
     <>
       <NavBar />
+      <NotificationToast />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/platform" element={<PlatformPage />} />
@@ -126,6 +129,7 @@ export default function App() {
     <BrowserRouter>
       <ClubProvider>
         <AuthProvider>
+          <NotificationsProvider>
           <Routes>
             <Route
               path="/grading/:id/print"
@@ -137,6 +141,7 @@ export default function App() {
             />
             <Route path="/*" element={<AppRoutes />} />
           </Routes>
+          </NotificationsProvider>
         </AuthProvider>
       </ClubProvider>
     </BrowserRouter>

@@ -21,6 +21,7 @@ import sponsorsRoutes from './routes/sponsors';
 import positionsRoutes from './routes/positions';
 import gradingRoutes from './routes/grading';
 import documentsRoutes from './routes/documents';
+import notificationsRoutes from './routes/notifications';
 
 const app = new Hono<{ Bindings: Env; Variables: HonoVariables }>();
 
@@ -82,6 +83,9 @@ app.get('/api/documents/public', async (c) => {
 
 app.use('/api/documents/*', authMiddleware);
 app.route('/api/documents', documentsRoutes);
+
+app.use('/api/notifications/*', authMiddleware);
+app.route('/api/notifications/summary', notificationsRoutes);
 
 // Serve sponsor logos (4-level path — must come before shorter routes below)
 app.get('/uploads/sponsor-logos/:sponsorId/:size/:filename', async (c) => {

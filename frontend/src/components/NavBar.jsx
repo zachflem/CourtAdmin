@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useClub } from '../contexts/ClubContext';
+import { useNotifications } from '../contexts/NotificationsContext';
 import './NavBar.css';
 
 function HamburgerIcon({ open }) {
@@ -32,9 +33,15 @@ function HamburgerIcon({ open }) {
   );
 }
 
+function NotifBadge({ count }) {
+  if (!count) return null;
+  return <span className="notif-badge">{count > 99 ? '99+' : count}</span>;
+}
+
 export function NavBar() {
   const { user, loading, isMocking, mockRole, setMockRole } = useAuth();
   const { settings } = useClub();
+  const { counts } = useNotifications();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
@@ -62,6 +69,11 @@ export function NavBar() {
   }, [menuOpen]);
 
   const hasMenu = isStaff || isCoachOrManager;
+
+  // Per-link counts (role-aware)
+  const messagesCount = counts.unread_messages + counts.pending_eois;
+  const usersCount = counts.pending_role_requests;
+  const docsCount = counts.pending_doc_acks;
 
   return (
     <>
@@ -102,6 +114,9 @@ export function NavBar() {
                   aria-expanded={menuOpen}
                 >
                   <HamburgerIcon open={menuOpen} />
+                  {counts.total > 0 && !menuOpen && (
+                    <span className="hamburger-dot" aria-hidden="true" />
+                  )}
                 </button>
 
                 {menuOpen && (
@@ -112,10 +127,16 @@ export function NavBar() {
                         <Link to="/teams" className="menu-link">Teams</Link>
                         <Link to="/venues" className="menu-link">Venues</Link>
                         <Link to="/players" className="menu-link">Players</Link>
-                        <Link to="/users" className="menu-link">Users</Link>
+                        <Link to="/users" className="menu-link menu-link--badged">
+                          Users <NotifBadge count={usersCount} />
+                        </Link>
                         <Link to="/sponsors" className="menu-link">Sponsors</Link>
-                        <Link to="/documents" className="menu-link">Documents</Link>
-                        <Link to="/email" className="menu-link">Messages</Link>
+                        <Link to="/documents" className="menu-link menu-link--badged">
+                          Documents <NotifBadge count={docsCount} />
+                        </Link>
+                        <Link to="/email" className="menu-link menu-link--badged">
+                          Messages <NotifBadge count={messagesCount} />
+                        </Link>
                         {isAdmin && (
                           <>
                             <div className="menu-divider" />
@@ -128,7 +149,9 @@ export function NavBar() {
                       <>
                         <p className="menu-section-label">My Club</p>
                         <Link to="/venues" className="menu-link">Venues</Link>
-                        <Link to="/documents" className="menu-link">Documents</Link>
+                        <Link to="/documents" className="menu-link menu-link--badged">
+                          Documents <NotifBadge count={docsCount} />
+                        </Link>
                       </>
                     )}
                   </div>

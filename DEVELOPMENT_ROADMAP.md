@@ -818,11 +818,11 @@ Key differences from the original MongoDB design:
 ---
 
 ### Phase 21 — Notification Badges & Toasts
-- [ ] `GET /api/notifications/summary` — returns counts: pending EOIs, pending role requests, unread contact messages, pending document acknowledgements
-- [ ] Frontend: badge overlays on relevant nav items (role-aware — only show counts relevant to the current user's roles)
-- [ ] Frontend: session toast on authenticated page load — summarises non-zero counts, dismissible, non-blocking
-- [ ] `sessionStorage` flag to suppress toast after first dismiss within a session
-- [ ] `DEVELOPMENT_ROADMAP.md` updated
+- [x] `GET /api/notifications/summary` — returns counts: pending EOIs, pending role requests, unread contact messages, pending document acknowledgements
+- [x] Frontend: badge overlays on relevant nav items (role-aware — only show counts relevant to the current user's roles)
+- [x] Frontend: session toast on authenticated page load — summarises non-zero counts, dismissible, non-blocking
+- [x] `sessionStorage` flag to suppress toast after first dismiss within a session
+- [x] `DEVELOPMENT_ROADMAP.md` updated
 
 ---
 

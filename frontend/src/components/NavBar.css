@@ -203,6 +203,48 @@
   opacity: 0.8;
 }
 
+/* ── Notification badge on hamburger ─────────────────────────── */
+
+.hamburger-btn {
+  position: relative;
+}
+
+.hamburger-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid var(--primary, #1e40af);
+}
+
+/* ── Per-link count badges ────────────────────────────────────── */
+
+.menu-link--badged {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.notif-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
 /* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 480px) {
