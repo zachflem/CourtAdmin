@@ -267,6 +267,12 @@ app.put('/:id', authMiddleware, async (c) => {
 
       parentId = newParent!.id;
     }
+
+    // Link parent → child in user_parents
+    await c.env.DB.prepare(
+      `INSERT OR IGNORE INTO user_parents (parent_user_id, child_user_id, relationship)
+       VALUES (?, ?, ?)`
+    ).bind(parentId, playerId, eoi.relationship_to_player ?? null).run();
   }
 
   // Update EOI record

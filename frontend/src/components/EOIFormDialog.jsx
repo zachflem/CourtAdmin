@@ -134,7 +134,7 @@ export function EOIFormDialog({ onClose }) {
 
             <div className="field-row">
               <label className="field-label">
-                First Name <span className="req">*</span>
+                <span>First Name <span className="req">*</span></span>
                 <input
                   className="field-input"
                   type="text"
@@ -144,7 +144,7 @@ export function EOIFormDialog({ onClose }) {
                 />
               </label>
               <label className="field-label">
-                Last Name <span className="req">*</span>
+                <span>Last Name <span className="req">*</span></span>
                 <input
                   className="field-input"
                   type="text"
@@ -157,7 +157,7 @@ export function EOIFormDialog({ onClose }) {
 
             <div className="field-row">
               <label className="field-label">
-                Email <span className="req">*</span>
+                <span>Email <span className="req">*</span></span>
                 <input
                   className="field-input"
                   type="email"
@@ -167,7 +167,7 @@ export function EOIFormDialog({ onClose }) {
                 />
               </label>
               <label className="field-label">
-                Phone
+                <span>Phone</span>
                 <input
                   className="field-input"
                   type="tel"
@@ -179,7 +179,7 @@ export function EOIFormDialog({ onClose }) {
 
             <div className="field-row">
               <label className="field-label">
-                Date of Birth <span className="req">*</span>
+                <span>Date of Birth <span className="req">*</span></span>
                 <input
                   className="field-input"
                   type="date"
@@ -187,9 +187,15 @@ export function EOIFormDialog({ onClose }) {
                   onChange={(e) => set('date_of_birth', e.target.value)}
                   required
                 />
+                {age !== null && (
+                  <span className="field-hint">
+                    Age: {age}
+                    {isMinor && ' — parent / guardian details required below'}
+                  </span>
+                )}
               </label>
               <label className="field-label">
-                Gender <span className="req">*</span>
+                <span>Gender <span className="req">*</span></span>
                 <select
                   className="field-input"
                   value={form.gender}
@@ -212,7 +218,7 @@ export function EOIFormDialog({ onClose }) {
             <h3 className="eoi-section-title">Playing Details</h3>
 
             <label className="field-label">
-              Experience Level <span className="req">*</span>
+              <span>Experience Level <span className="req">*</span></span>
               <select
                 className="field-input"
                 value={form.experience_level}
@@ -229,7 +235,7 @@ export function EOIFormDialog({ onClose }) {
             </label>
 
             <label className="field-label">
-              Season Interest <span className="req">*</span>
+              <span>Season Interest <span className="req">*</span></span>
               <select
                 className="field-input"
                 value={form.season_interest}
@@ -256,7 +262,7 @@ export function EOIFormDialog({ onClose }) {
             <h3 className="eoi-section-title">Emergency Contact</h3>
             <div className="field-row">
               <label className="field-label">
-                Name <span className="req">*</span>
+                <span>Name <span className="req">*</span></span>
                 <input
                   className="field-input"
                   type="text"
@@ -266,7 +272,7 @@ export function EOIFormDialog({ onClose }) {
                 />
               </label>
               <label className="field-label">
-                Phone <span className="req">*</span>
+                <span>Phone <span className="req">*</span></span>
                 <input
                   className="field-input"
                   type="tel"
@@ -294,7 +300,7 @@ export function EOIFormDialog({ onClose }) {
               <div className="eoi-subsection">
                 <div className="field-row">
                   <label className="field-label">
-                    Previous Club
+                    <span>Previous Club</span>
                     <input
                       className="field-input"
                       type="text"
@@ -303,7 +309,7 @@ export function EOIFormDialog({ onClose }) {
                     />
                   </label>
                   <label className="field-label">
-                    Previous Team
+                    <span>Previous Team</span>
                     <input
                       className="field-input"
                       type="text"
@@ -313,7 +319,7 @@ export function EOIFormDialog({ onClose }) {
                   </label>
                 </div>
                 <label className="field-label">
-                  Previous Coach
+                  <span>Previous Coach</span>
                   <input
                     className="field-input"
                     type="text"
@@ -335,7 +341,7 @@ export function EOIFormDialog({ onClose }) {
 
               <div className="field-row">
                 <label className="field-label">
-                  Name <span className="req">*</span>
+                  <span>Name <span className="req">*</span></span>
                   <input
                     className="field-input"
                     type="text"
@@ -345,7 +351,7 @@ export function EOIFormDialog({ onClose }) {
                   />
                 </label>
                 <label className="field-label">
-                  Relationship <span className="req">*</span>
+                  <span>Relationship <span className="req">*</span></span>
                   <input
                     className="field-input"
                     type="text"
@@ -359,7 +365,7 @@ export function EOIFormDialog({ onClose }) {
 
               <div className="field-row">
                 <label className="field-label">
-                  Email <span className="req">*</span>
+                  <span>Email <span className="req">*</span></span>
                   <input
                     className="field-input"
                     type="email"
@@ -369,7 +375,7 @@ export function EOIFormDialog({ onClose }) {
                   />
                 </label>
                 <label className="field-label">
-                  Phone <span className="req">*</span>
+                  <span>Phone <span className="req">*</span></span>
                   <input
                     className="field-input"
                     type="tel"
@@ -385,7 +391,7 @@ export function EOIFormDialog({ onClose }) {
           {/* Additional Notes */}
           <section className="eoi-section">
             <label className="field-label">
-              Additional Notes
+              <span>Additional Notes</span>
               <textarea
                 className="field-input field-textarea"
                 value={form.additional_notes}
