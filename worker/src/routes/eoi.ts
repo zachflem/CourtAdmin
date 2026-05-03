@@ -334,8 +334,8 @@ app.put('/:id', authMiddleware, async (c) => {
 // ── Public route (no auth) ───────────────────────────────────────────────────
 
 interface EOIBody {
-  first_name: string; last_name: string; email: string; phone?: string;
-  date_of_birth: string; gender: string; grading_level: number;
+  first_name: string; last_name: string; email?: string; phone?: string;
+  date_of_birth: string; gender: string; grading_level?: number;
   experience_level: string; season_interest: string;
   emergency_contact_name: string; emergency_contact_phone: string;
   additional_notes?: string;
@@ -349,21 +349,20 @@ app.post('/', async (c) => {
   const body = await c.req.json<EOIBody>();
 
   const {
-    first_name, last_name, email, date_of_birth, gender,
-    grading_level, experience_level, season_interest,
+    first_name, last_name, date_of_birth, gender,
+    experience_level, season_interest,
     emergency_contact_name, emergency_contact_phone,
   } = body;
 
+  // Either the player email or a parent/guardian email must be present
+  const contactEmail = body.email || body.parent_guardian_email;
+
   if (
-    !first_name || !last_name || !email || !date_of_birth || !gender ||
-    !grading_level || !experience_level || !season_interest ||
+    !first_name || !last_name || !contactEmail || !date_of_birth || !gender ||
+    !experience_level || !season_interest ||
     !emergency_contact_name || !emergency_contact_phone
   ) {
     return c.json({ error: 'Missing required fields' }, 400);
-  }
-
-  if (grading_level < 1 || grading_level > 5) {
-    return c.json({ error: 'grading_level must be between 1 and 5' }, 400);
   }
 
   const season = await c.env.DB.prepare(
@@ -385,9 +384,9 @@ app.post('/', async (c) => {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     RETURNING id, submitted_at
   `).bind(
-    first_name, last_name, email,
+    first_name, last_name, body.email ?? null,
     body.phone ?? null, date_of_birth,
-    gender, grading_level, experience_level, season_interest,
+    gender, body.grading_level ?? null, experience_level, season_interest,
     emergency_contact_name, emergency_contact_phone,
     body.additional_notes ?? null,
     body.parent_guardian_name ?? null, body.parent_guardian_email ?? null,
@@ -403,11 +402,13 @@ app.post('/', async (c) => {
     ).first<{ club_name: string }>();
     const clubName = clubSettings?.club_name ?? 'the club';
 
+    const recipientEmail = body.email || body.parent_guardian_email!;
+    const recipientName = body.email ? first_name : (body.parent_guardian_name ?? first_name);
     await sendEmail(
       c.env,
-      email,
+      recipientEmail,
       `Expression of Interest received — ${clubName}`,
-      `<p>Hi ${first_name},</p>
+      `<p>Hi ${recipientName},</p>
        <p>Thank you for submitting your Expression of Interest for <strong>${season.name}</strong>.
        We've received your application and will be in touch soon.</p>
        <p>— ${clubName}</p>`,
