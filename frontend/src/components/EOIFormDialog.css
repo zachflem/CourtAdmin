@@ -146,6 +146,20 @@
   color: #9ca3af;
 }
 
+.field-age-hint {
+  margin: -0.25rem 0 0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: #9ca3af;
+  min-height: 1em;
+}
+
+.field-label-optional {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 0.8em;
+}
+
 .field-input {
   padding: 0.55rem 0.75rem;
   border: 1px solid #d1d5db;

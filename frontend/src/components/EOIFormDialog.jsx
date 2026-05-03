@@ -67,12 +67,15 @@ export function EOIFormDialog({ onClose }) {
     try {
       const payload = {
         ...form,
-        // Strip parent fields when submitter is not a minor
+        // For minors, parent details serve as emergency contact
+        emergency_contact_name: isMinor ? form.parent_guardian_name : form.emergency_contact_name,
+        emergency_contact_phone: isMinor ? form.parent_guardian_phone : form.emergency_contact_phone,
+        // Strip parent fields for adults
         parent_guardian_name: isMinor ? form.parent_guardian_name : undefined,
         parent_guardian_email: isMinor ? form.parent_guardian_email : undefined,
         parent_guardian_phone: isMinor ? form.parent_guardian_phone : undefined,
         relationship_to_player: isMinor ? form.relationship_to_player : undefined,
-        // Strip clearance details when clearance is not required
+        // Strip clearance details when not required
         previous_club_name: form.clearance_required ? form.previous_club_name : undefined,
         previous_team_name: form.clearance_required ? form.previous_team_name : undefined,
         previous_coach_name: form.clearance_required ? form.previous_coach_name : undefined,
@@ -106,7 +109,7 @@ export function EOIFormDialog({ onClose }) {
             <h2 className="eoi-success-title">Application Received!</h2>
             <p className="eoi-success-body">
               Thank you for your interest. We've sent a confirmation to{' '}
-              <strong>{form.email}</strong> and will be in touch soon.
+              <strong>{form.email || form.parent_guardian_email}</strong> and will be in touch soon.
             </p>
             <button className="btn btn-primary" onClick={onClose}>
               Close
@@ -157,28 +160,6 @@ export function EOIFormDialog({ onClose }) {
 
             <div className="field-row">
               <label className="field-label">
-                <span>Email <span className="req">*</span></span>
-                <input
-                  className="field-input"
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set('email', e.target.value)}
-                  required
-                />
-              </label>
-              <label className="field-label">
-                <span>Phone</span>
-                <input
-                  className="field-input"
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => set('phone', e.target.value)}
-                />
-              </label>
-            </div>
-
-            <div className="field-row">
-              <label className="field-label">
                 <span>Date of Birth <span className="req">*</span></span>
                 <input
                   className="field-input"
@@ -187,12 +168,6 @@ export function EOIFormDialog({ onClose }) {
                   onChange={(e) => set('date_of_birth', e.target.value)}
                   required
                 />
-                {age !== null && (
-                  <span className="field-hint">
-                    Age: {age}
-                    {isMinor && ' — parent / guardian details required below'}
-                  </span>
-                )}
               </label>
               <label className="field-label">
                 <span>Gender <span className="req">*</span></span>
@@ -209,6 +184,40 @@ export function EOIFormDialog({ onClose }) {
                     </option>
                   ))}
                 </select>
+              </label>
+            </div>
+
+            {/* Age hint — always rendered to prevent layout shift */}
+            <p className="field-age-hint">
+              {age !== null
+                ? `Age: ${age}${isMinor ? ' — parent / guardian details required below' : ''}`
+                : ' '}
+            </p>
+
+            <div className="field-row">
+              <label className="field-label">
+                <span>
+                  Email{' '}
+                  {isMinor
+                    ? <span className="field-label-optional">(optional)</span>
+                    : <span className="req">*</span>}
+                </span>
+                <input
+                  className="field-input"
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => set('email', e.target.value)}
+                  required={!isMinor}
+                />
+              </label>
+              <label className="field-label">
+                <span>Phone</span>
+                <input
+                  className="field-input"
+                  type="tel"
+                  value={form.phone}
+                  onChange={(e) => set('phone', e.target.value)}
+                />
               </label>
             </div>
           </section>
@@ -257,85 +266,11 @@ export function EOIFormDialog({ onClose }) {
             </label>
           </section>
 
-          {/* Emergency Contact */}
-          <section className="eoi-section">
-            <h3 className="eoi-section-title">Emergency Contact</h3>
-            <div className="field-row">
-              <label className="field-label">
-                <span>Name <span className="req">*</span></span>
-                <input
-                  className="field-input"
-                  type="text"
-                  value={form.emergency_contact_name}
-                  onChange={(e) => set('emergency_contact_name', e.target.value)}
-                  required
-                />
-              </label>
-              <label className="field-label">
-                <span>Phone <span className="req">*</span></span>
-                <input
-                  className="field-input"
-                  type="tel"
-                  value={form.emergency_contact_phone}
-                  onChange={(e) => set('emergency_contact_phone', e.target.value)}
-                  required
-                />
-              </label>
-            </div>
-          </section>
-
-          {/* Transfer Clearance */}
-          <section className="eoi-section">
-            <h3 className="eoi-section-title">Transfer Clearance</h3>
-            <label className="eoi-checkbox-label">
-              <input
-                type="checkbox"
-                checked={form.clearance_required}
-                onChange={(e) => set('clearance_required', e.target.checked)}
-              />
-              I am transferring from another club and require a clearance
-            </label>
-
-            {form.clearance_required && (
-              <div className="eoi-subsection">
-                <div className="field-row">
-                  <label className="field-label">
-                    <span>Previous Club</span>
-                    <input
-                      className="field-input"
-                      type="text"
-                      value={form.previous_club_name}
-                      onChange={(e) => set('previous_club_name', e.target.value)}
-                    />
-                  </label>
-                  <label className="field-label">
-                    <span>Previous Team</span>
-                    <input
-                      className="field-input"
-                      type="text"
-                      value={form.previous_team_name}
-                      onChange={(e) => set('previous_team_name', e.target.value)}
-                    />
-                  </label>
-                </div>
-                <label className="field-label">
-                  <span>Previous Coach</span>
-                  <input
-                    className="field-input"
-                    type="text"
-                    value={form.previous_coach_name}
-                    onChange={(e) => set('previous_coach_name', e.target.value)}
-                  />
-                </label>
-              </div>
-            )}
-          </section>
-
-          {/* Parent / Guardian — shown for minors */}
-          {isMinor && (
+          {/* Emergency Contact (adults) OR Parent / Guardian (minors) */}
+          {isMinor ? (
             <section className="eoi-section eoi-section--minor">
               <h3 className="eoi-section-title">
-                Parent / Guardian Details
+                Parent / Guardian
                 <span className="eoi-minor-badge">Required — under 18</span>
               </h3>
 
@@ -386,7 +321,80 @@ export function EOIFormDialog({ onClose }) {
                 </label>
               </div>
             </section>
+          ) : (
+            <section className="eoi-section">
+              <h3 className="eoi-section-title">Emergency Contact</h3>
+              <div className="field-row">
+                <label className="field-label">
+                  <span>Name <span className="req">*</span></span>
+                  <input
+                    className="field-input"
+                    type="text"
+                    value={form.emergency_contact_name}
+                    onChange={(e) => set('emergency_contact_name', e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="field-label">
+                  <span>Phone <span className="req">*</span></span>
+                  <input
+                    className="field-input"
+                    type="tel"
+                    value={form.emergency_contact_phone}
+                    onChange={(e) => set('emergency_contact_phone', e.target.value)}
+                    required
+                  />
+                </label>
+              </div>
+            </section>
           )}
+
+          {/* Transfer Clearance */}
+          <section className="eoi-section">
+            <h3 className="eoi-section-title">Transfer Clearance</h3>
+            <label className="eoi-checkbox-label">
+              <input
+                type="checkbox"
+                checked={form.clearance_required}
+                onChange={(e) => set('clearance_required', e.target.checked)}
+              />
+              I am transferring from another club and require a clearance
+            </label>
+
+            {form.clearance_required && (
+              <div className="eoi-subsection">
+                <div className="field-row">
+                  <label className="field-label">
+                    <span>Previous Club</span>
+                    <input
+                      className="field-input"
+                      type="text"
+                      value={form.previous_club_name}
+                      onChange={(e) => set('previous_club_name', e.target.value)}
+                    />
+                  </label>
+                  <label className="field-label">
+                    <span>Previous Team</span>
+                    <input
+                      className="field-input"
+                      type="text"
+                      value={form.previous_team_name}
+                      onChange={(e) => set('previous_team_name', e.target.value)}
+                    />
+                  </label>
+                </div>
+                <label className="field-label">
+                  <span>Previous Coach</span>
+                  <input
+                    className="field-input"
+                    type="text"
+                    value={form.previous_coach_name}
+                    onChange={(e) => set('previous_coach_name', e.target.value)}
+                  />
+                </label>
+              </div>
+            )}
+          </section>
 
           {/* Additional Notes */}
           <section className="eoi-section">
